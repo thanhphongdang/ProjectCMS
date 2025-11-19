@@ -1,0 +1,1 @@
+2025-11-13T17:45:53+00:00 ERROR Failed to handle the log: Attempt to get an instance of class 'Automattic\WooCommerce\Internal\DataStores\Orders\OrdersTableDataStoreMeta', which doesn't exist.

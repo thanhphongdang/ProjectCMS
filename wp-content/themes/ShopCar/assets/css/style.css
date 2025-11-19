@@ -1,0 +1,184 @@
+/* ============================
+   FIX MENU HEADER ETRADE STYLE
+   ============================ */
+
+/* Reset menu */
+.mainmenu,
+.mainmenu ul,
+.mainmenu li {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.mainmenu {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    /* khoảng cách giống eTrade */
+}
+
+.mainmenu>li {
+    position: relative;
+}
+
+.mainmenu>li>a {
+    display: inline-flex;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: #292930;
+    padding: 15px 0;
+    transition: 0.3s;
+}
+
+/* Hover màu xám nhạt */
+.mainmenu>li>a:hover {
+    color: #777;
+}
+
+/* Icon dropdown giống eTrade */
+.mainmenu>li.menu-item-has-children>a::after {
+    content: "\f107";
+    /* Font Awesome: chevron-down */
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    margin-left: 6px;
+    font-size: 12px;
+    color: #b5b5b5;
+    transition: 0.3s;
+}
+
+/* Hover icon xoay */
+.mainmenu>li.menu-item-has-children:hover>a::after {
+    transform: rotate(180deg);
+}
+
+/* ACTIVE LINK – gạch chân giống bản gốc */
+.mainmenu>li.current-menu-item>a,
+.mainmenu>li.current_page_item>a {
+    position: relative;
+    color: #292930;
+}
+
+.mainmenu>li.current-menu-item>a::before,
+.mainmenu>li.current_page_item>a::before {
+    content: "";
+    position: absolute;
+    bottom: 5px;
+    left: 0;
+    width: 30px;
+    height: 2px;
+    background: #292930;
+    border-radius: 2px;
+}
+
+/* ============================
+   DROPDOWN MENU
+   ============================ */
+.mainmenu .sub-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: #ffffff;
+    min-width: 220px;
+    padding: 15px 0;
+    border-radius: 6px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    display: none;
+    z-index: 999;
+}
+
+.mainmenu li:hover>.sub-menu {
+    display: block;
+}
+
+.mainmenu .sub-menu li a {
+    display: block;
+    padding: 10px 20px;
+    font-size: 15px;
+    color: #292930;
+    transition: 0.3s;
+}
+
+.mainmenu .sub-menu li a:hover {
+    color: #3577f0;
+    background: #f5f5f5;
+}
+
+/* ==========================
+   ACCOUNT DROPDOWN (USER ICON)
+   ========================== */
+
+.menu-account {
+    position: relative;
+}
+
+.menu-account .account-dropdown {
+    position: absolute;
+    right: 0;
+    top: 130%;
+    background: #ffffff;
+    list-style: none;
+    padding: 10px 0;
+    min-width: 180px;
+    border-radius: 6px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    display: none;
+    z-index: 9999;
+}
+
+.menu-account .account-dropdown li a {
+    display: block;
+    padding: 10px 20px;
+    color: #292930;
+    font-size: 15px;
+    transition: 0.2s;
+}
+
+.menu-account .account-dropdown li a:hover {
+    background: #f4f4f4;
+    color: #3577f0;
+}
+
+/* Hover to show dropdown */
+.menu-account:hover .account-dropdown {
+    display: block;
+}
+
+/* ===== SIGN IN / SIGN UP FIX ===== */
+.axil-signin-area {
+    padding: 80px 0;
+    background: #fff;
+    position: relative;
+    z-index: 10;
+}
+
+.axil-signin-form-wrap {
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+}
+
+.signin-header-btn p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.signin-header-btn .axil-btn {
+    padding: 8px 22px;
+    font-size: 14px;
+}
+
+.signin-header {
+    margin-bottom: 40px;
+}
+
+.signin-form .form-group {
+    margin-bottom: 25px;
+}
+
+.submit-btn {
+    min-width: 140px;
+}
