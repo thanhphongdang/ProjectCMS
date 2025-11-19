@@ -9,3 +9,23 @@ License: GNU General Public License v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: ShopCar
 */
+.menu-account .account-dropdown {
+    display: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: 0.2s ease;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    padding: 10px 0;
+    border-radius: 6px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    z-index: 999;
+}
+
+.menu-account.open .account-dropdown {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+}

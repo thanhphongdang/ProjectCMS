@@ -2,12 +2,11 @@
 /* 
 Template Name: Signup Page 
 */
-get_header(); 
+get_header();
 ?>
 
 <div class="axil-signin-area">
 
-    
     <div class="row">
         <div class="col-xl-4 col-lg-6">
             <div class="axil-signin-banner bg_image bg_image--10">
@@ -22,7 +21,27 @@ get_header();
                     <h3 class="title">I'm New Here</h3>
                     <p class="b2 mb--55">Enter your detail below</p>
 
-                    <!-- FORM SIGN UP -->
+                    <!-- HIỂN THỊ LỖI -->
+                    <?php
+                        if (!empty($GLOBALS['shopcar_signup_error'])) {
+                            echo '<div style="color:red; margin-bottom:20px;">';
+
+                            foreach ($GLOBALS['shopcar_signup_error']->get_error_messages() as $err) {
+                                echo '<p>' . esc_html($err) . '</p>';
+                            }
+
+                            echo '</div>';
+                        }
+                    ?>
+
+                    <!-- HIỂN THỊ THÀNH CÔNG -->
+                    <?php if (!empty($GLOBALS['shopcar_signup_success'])): ?>
+                        <p style="color:green; margin-bottom:20px;">
+                            <?php echo esc_html($GLOBALS['shopcar_signup_success']); ?>
+                        </p>
+                    <?php endif; ?>
+
+                    <!-- FORM SIGNUP -->
                     <form class="singin-form" method="post">
 
                         <div class="form-group">
@@ -47,22 +66,6 @@ get_header();
                         </div>
 
                     </form>
-
-                    <?php
-                    // XỬ LÝ TẠO TÀI KHOẢN
-                    if ( isset($_POST['signup_submit']) ) {
-                        $username = sanitize_user($_POST['username']);
-                        $email    = sanitize_email($_POST['email']);
-                        $password = $_POST['password'];
-
-                        if ( username_exists($username) || email_exists($email) ) {
-                            echo "<p style='color:red'>Account already exists!</p>";
-                        } else {
-                            wp_create_user($username, $password, $email);
-                            echo "<p style='color:green'>Account created successfully!</p>";
-                        }
-                    }
-                    ?>
 
                 </div>
             </div>
