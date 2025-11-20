@@ -1,0 +1,197 @@
+/* ============================
+   MAIN MENU
+   ============================ */
+.mainmenu,
+.mainmenu ul,
+.mainmenu li {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.mainmenu {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+}
+
+.mainmenu>li {
+    position: relative;
+}
+
+.mainmenu>li>a {
+    display: inline-flex;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: #292930;
+    padding: 15px 0;
+    transition: 0.3s;
+}
+
+.mainmenu>li>a:hover {
+    color: #777;
+}
+
+/* Dropdown arrow */
+.mainmenu>li.menu-item-has-children>a::after {
+    content: "\f107";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    margin-left: 6px;
+    font-size: 12px;
+    color: #b5b5b5;
+    transition: 0.3s;
+}
+
+.mainmenu>li.menu-item-has-children:hover>a::after {
+    transform: rotate(180deg);
+}
+
+/* Active underline */
+.mainmenu>li.current-menu-item>a::before,
+.mainmenu>li.current_page_item>a::before {
+    content: "";
+    position: absolute;
+    bottom: 5px;
+    left: 0;
+    width: 30px;
+    height: 2px;
+    background: #292930;
+    border-radius: 2px;
+}
+
+/* ============================
+   DROPDOWN MENU
+   ============================ */
+.mainmenu .sub-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: #fff;
+    min-width: 220px;
+    padding: 15px 0;
+    border-radius: 6px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    display: none;
+    z-index: 999;
+}
+
+.mainmenu li:hover>.sub-menu {
+    display: block;
+}
+
+.mainmenu .sub-menu li a {
+    display: block;
+    padding: 10px 20px;
+    font-size: 15px;
+    color: #292930;
+    transition: 0.3s;
+}
+
+.mainmenu .sub-menu li a:hover {
+    color: #3577f0;
+    background: #f5f5f5;
+}
+
+/* ============================
+   ACCOUNT DROPDOWN (CLICK)
+   ============================ */
+
+.menu-account {
+    position: relative;
+}
+
+/* Hidden by default */
+.menu-account .account-dropdown {
+    position: absolute;
+    right: 0;
+    top: 130%;
+    background: #fff;
+    min-width: 180px;
+    border-radius: 6px;
+    padding: 10px 0;
+    list-style: none;
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: 0.25s ease;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    z-index: 9999;
+}
+
+/* Show when active */
+.menu-account.active .account-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.menu-account .account-dropdown li a {
+    display: block;
+    padding: 10px 20px;
+    color: #292930;
+    font-size: 15px;
+    transition: 0.2s;
+}
+
+.menu-account .account-dropdown li a:hover {
+    background: #f4f4f4;
+    color: #3577f0;
+}
+
+/* Disable old hover behavior */
+.menu-account:hover .account-dropdown {
+    display: none !important;
+}
+
+/* ============================
+   PRODUCT GRID FIX
+   ============================ */
+.axil-product.product-style-one {
+    position: relative;
+}
+
+.axil-product-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 25px;
+    justify-content: center;
+}
+
+/* Custom product card width */
+.product-card {
+    width: 260px;
+}
+
+@media (max-width: 992px) {
+    .product-card {
+        width: 45%;
+    }
+}
+
+@media (max-width: 576px) {
+    .product-card {
+        width: 100%;
+    }
+}
+
+/* WooCommerce shop grid */
+.woocommerce ul.products {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+}
+
+@media(max-width: 768px) {
+    .woocommerce ul.products {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media(max-width: 480px) {
+    .woocommerce ul.products {
+        grid-template-columns: repeat(1, 1fr);
+    }
+}
