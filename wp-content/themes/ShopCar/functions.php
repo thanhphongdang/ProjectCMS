@@ -114,3 +114,94 @@ add_filter('woocommerce_logout_redirect', function($redirect_url){
     return home_url('/login');
 });
 
+
+// bui-tham-ky1-view-count
+/**
+ * === WooCommerce Product View Counter ===
+ */
+function shopcar_track_product_views() {
+    if ( is_admin() && ! wp_doing_ajax() ) {
+        return;
+    }
+
+    if ( ! is_product() ) {
+        return;
+    }
+
+    $product_id = get_queried_object_id();
+
+    if ( ! $product_id ) {
+        return;
+    }
+
+    $current_views = (int) get_post_meta( $product_id, '_view_count', true );
+    $new_views     = $current_views + 1;
+
+    update_post_meta( $product_id, '_view_count', $new_views );
+}
+add_action( 'template_redirect', 'shopcar_track_product_views' );
+
+
+function shopcar_append_view_count_to_price( $price_html, $product ) {
+    if ( ! is_product() ) {
+        return $price_html;
+    }
+
+    if ( empty( $product ) || ! $product instanceof WC_Product ) {
+        return $price_html;
+    }
+
+    $views      = (int) get_post_meta( $product->get_id(), '_view_count', true );
+    $view_block = sprintf(
+        '<div class="shopcar-product-view-meta"><span class="view-icon" aria-hidden="true">👁</span><span class="view-label">%s</span><span class="view-count">%s</span></div>',
+        esc_html__( 'Số lượt xem:', 'shopcar' ),
+        esc_html( number_format_i18n( $views ) )
+    );
+
+    return $price_html . $view_block;
+}
+add_filter( 'woocommerce_get_price_html', 'shopcar_append_view_count_to_price', 20, 2 );
+
+
+function shopcar_product_view_styles() {
+    $custom_css = '
+        .shopcar-product-view-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: transparent;
+            padding: 0;
+            border-radius: 0;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-top: 12px;
+            box-shadow: none;
+            width: 100%;
+        }
+        .shopcar-product-view-meta .view-icon {
+            font-size: 16px;
+        }
+        .shopcar-product-view-meta .view-label {
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            font-size: 12px;
+            color: #86868b;
+        }
+        .shopcar-product-view-meta .view-count {
+            font-size: 16px;
+            color: #ff4500;
+        }
+        .single-product .price-amount {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .single-product .price-amount .price {
+            line-height: 1.3;
+        }
+    ';
+
+    wp_add_inline_style( 'shopcar-style', $custom_css );
+}
+add_action( 'wp_enqueue_scripts', 'shopcar_product_view_styles', 20 );
+// End bui-tham-ky1-view-count
