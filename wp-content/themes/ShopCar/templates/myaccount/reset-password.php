@@ -1,114 +1,45 @@
 <?php
 defined('ABSPATH') || exit;
-
 get_header();
-
-/**
- * Lấy key và user_login từ URL
- */
-$rp_key   = isset($_GET['key']) ? sanitize_text_field($_GET['key']) : '';
-$rp_login = isset($_GET['login']) ? sanitize_text_field($_GET['login']) : '';
-
-/**
- * Kiểm tra hợp lệ key reset password
- */
-$validate = check_password_reset_key($rp_key, $rp_login);
-
-if (is_wp_error($validate)) {
-    wc_add_notice('Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.', 'error');
-    $rp_key = $rp_login = '';
-}
-
-/**
- * HANDLE RESET PASSWORD FORM SUBMISSION
- */
-if (
-    $_SERVER['REQUEST_METHOD'] === 'POST' &&
-    isset($_POST['shopcar_reset_nonce']) &&
-    wp_verify_nonce($_POST['shopcar_reset_nonce'], 'shopcar_reset')
-) {
-    $password1 = isset($_POST['password_1']) ? (string) $_POST['password_1'] : '';
-    $password2 = isset($_POST['password_2']) ? (string) $_POST['password_2'] : '';
-    $reset_key = isset($_POST['reset_key']) ? sanitize_text_field($_POST['reset_key']) : '';
-    $reset_login = isset($_POST['reset_login']) ? sanitize_text_field($_POST['reset_login']) : '';
-
-    $user = check_password_reset_key($reset_key, $reset_login);
-
-    // Validate form
-    if (is_wp_error($user)) {
-        wc_add_notice('Link đặt lại mật khẩu không chính xác hoặc đã hết hạn.', 'error');
-
-    } elseif (empty($password1) || empty($password2)) {
-        wc_add_notice('Vui lòng nhập đủ cả hai mật khẩu.', 'error');
-
-    } elseif ($password1 !== $password2) {
-        wc_add_notice('Mật khẩu xác nhận không khớp.', 'error');
-
-    } elseif (strlen($password1) < 6) {
-        wc_add_notice('Mật khẩu phải có ít nhất 6 ký tự.', 'error');
-
-    } else {
-        // Đặt mật khẩu mới
-        reset_password($user, $password1);
-
-        wc_add_notice('Đổi mật khẩu thành công! Hãy đăng nhập.', 'success');
-
-        // Redirect sau 2 giây
-        wp_safe_redirect(site_url('/login'));
-        exit;
-    }
-}
 ?>
 
 <main class="main-wrapper">
-    <div class="container mt--80 mb--80" style="max-width: 520px">
+    <div class="container mt--80 mb--80" style="max-width: 520px">a
 
-        <h2 class="title mb--20 text-center">Đặt lại mật khẩu</h2>
+        <h2 class="text-center mb--20" style="font-weight:700;">ĐỔI MẬT KHẨU</h2>
 
-        <div class="axil-auth-card axil-single-widget p-4" style="background:#fff;border-radius:12px;">
-            
+        <div class="p-4" style="background:#fff;border-radius:12px; border:1px solid #000;">
+
             <?php wc_print_notices(); ?>
 
-            <?php if (!empty($rp_key) && !empty($rp_login)) : ?>
+            <form method="post" class="woocommerce-ResetPassword" style="margin-top:20px;">
 
-                <form method="post" class="woocommerce-ResetPassword woocommerce-form reset_password">
+                <p>
+                    <label>Mật khẩu hiện tại *</label>
+                    <input type="password" name="current_pass"
+                           style="width:100%;padding:10px;border:1px solid #000;border-radius:6px;background:#fff;color:#000;">
+                </p>
 
-                    <input type="hidden" name="reset_key" value="<?php echo esc_attr($rp_key); ?>">
-                    <input type="hidden" name="reset_login" value="<?php echo esc_attr($rp_login); ?>">
+                <p>
+                    <label>Mật khẩu mới *</label>
+                    <input type="password" name="new_pass"
+                           style="width:100%;padding:10px;border:1px solid #000;border-radius:6px;background:#fff;color:#000;">
+                </p>
 
-                    <p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
-                        <label for="password_1">Mật khẩu mới <span class="required">*</span></label>
-                        <input type="password"
-                               name="password_1"
-                               id="password_1"
-                               class="input-text"
-                               autocomplete="new-password"
-                               required>
-                    </p>
+                <p>
+                    <label>Xác nhận mật khẩu mới *</label>
+                    <input type="password" name="confirm_pass"
+                           style="width:100%;padding:10px;border:1px solid #000;border-radius:6px;background:#fff;color:#000;">
+                </p>
 
-                    <p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
-                        <label for="password_2">Xác nhận mật khẩu <span class="required">*</span></label>
-                        <input type="password"
-                               name="password_2"
-                               id="password_2"
-                               class="input-text"
-                               autocomplete="new-password"
-                               required>
-                    </p>
+                <?php wp_nonce_field('save_new_password', 'password_nonce'); ?>
 
-                    <?php wp_nonce_field('shopcar_reset', 'shopcar_reset_nonce'); ?>
+                <button type="submit"
+                        style="width:100%;padding:12px;border:none;background:#000;color:#fff;border-radius:6px;margin-top:10px;">
+                    Lưu mật khẩu
+                </button>
 
-                    <p class="form-row mt--10">
-                        <button type="submit"
-                                class="axil-btn btn-primary w-100">
-                            Đổi mật khẩu
-                        </button>
-                    </p>
-                </form>
-
-            <?php else : ?>
-                <p class="text-center">Link đặt lại mật khẩu đã hết hạn hoặc không hợp lệ.</p>
-            <?php endif; ?>
+            </form>
 
         </div>
     </div>

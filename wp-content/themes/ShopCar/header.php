@@ -80,11 +80,11 @@
                                                     <strong><?php echo esc_html($current_user->display_name); ?></strong>
                                                 </li>
                                                 <li>
-                                                    <a
-                                                        href="<?php echo wc_get_endpoint_url('edit-account', '', wc_get_page_permalink('myaccount')); ?>">
+                                                    <a href="<?php echo site_url('/change-password'); ?>">
                                                         Đổi mật khẩu
                                                     </a>
                                                 </li>
+
 
                                                 <li class="separator"></li>
 

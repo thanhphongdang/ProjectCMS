@@ -494,6 +494,67 @@ function shopcar_social_share_assets()
 add_action('wp_enqueue_scripts', 'shopcar_social_share_assets', 25);
 // End bui-tham/2-social-sharing
 
+
+// bui-tham-ky/3-change-password
+add_action('init', function () {
+
+    if (
+        isset($_POST['password_nonce']) &&
+        wp_verify_nonce($_POST['password_nonce'], 'save_new_password')
+    ) {
+        $user = wp_get_current_user();
+
+        $current = isset($_POST['current_pass']) ? trim($_POST['current_pass']) : '';
+        $new = isset($_POST['new_pass']) ? trim($_POST['new_pass']) : '';
+        $confirm = isset($_POST['confirm_pass']) ? trim($_POST['confirm_pass']) : '';
+
+        // Validate
+        if (empty($current)) {
+            wc_add_notice('Hãy điền mật khẩu hiện tại.', 'error');
+            return;
+        }
+
+        if (!wp_check_password($current, $user->user_pass, $user->ID)) {
+            wc_add_notice('Sai mật khẩu hiện tại.', 'error');
+            return;
+        }
+
+        if (empty($new)) {
+            wc_add_notice('Vui lòng nhập mật khẩu mới.', 'error');
+            return;
+        }
+
+        if ($new !== $confirm) {
+            wc_add_notice('Xác nhận mật khẩu không khớp.', 'error');
+            return;
+        }
+
+        // Đổi mật khẩu
+        wp_set_password($new, $user->ID);
+
+        wc_add_notice('Lưu mật khẩu thành công.', 'success');
+
+        // Sau khi đổi mật khẩu → tự đăng nhập lại
+        wp_set_auth_cookie($user->ID);
+
+        return;
+    }
+});
+// End bui-tham-ky/3-change-password
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Start nhhh/1-login
 function shopcar_scripts()
 {
