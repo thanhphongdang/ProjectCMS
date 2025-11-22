@@ -31,6 +31,9 @@ if (
         if (is_wp_error($user)) {
             wc_add_notice('Email hoặc mật khẩu không đúng!', 'error');
         } else {
+            // Đánh dấu user login từ frontend
+            update_user_meta($user->ID, '_shopcar_login_source', 'frontend');
+            
             // Đăng nhập thành công -> điều hướng về trang chủ hoặc tài khoản
             wp_safe_redirect(wc_get_page_permalink('/'));
             exit;
