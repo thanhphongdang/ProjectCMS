@@ -542,6 +542,67 @@ add_action('init', function () {
 });
 // End bui-tham-ky/3-change-password
 
+// Tách riêng login frontend và wp-admin
+// Khi login ở wp-admin, đánh dấu là login từ admin
+add_action('wp_login', function($user_login, $user) {
+    // Kiểm tra nếu có nonce từ frontend form
+    if (isset($_POST['shopcar_login_nonce'])) {
+        // Login từ frontend - đã được set trong login.php
+        return;
+    }
+    
+    // Nếu không có nonce frontend, có thể là login từ wp-admin
+    // Kiểm tra referer hoặc request URI
+    $referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+    $request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+    
+    if (strpos($referer, '/wp-admin') !== false || 
+        strpos($referer, '/wp-login.php') !== false ||
+        strpos($request_uri, '/wp-admin') !== false ||
+        strpos($request_uri, '/wp-login.php') !== false) {
+        update_user_meta($user->ID, '_shopcar_login_source', 'admin');
+    }
+}, 10, 2);
+
+// Chặn truy cập wp-admin nếu user login từ frontend (trừ admin users)
+add_action('admin_init', function() {
+    // Bỏ qua nếu đang ở AJAX hoặc đang logout
+    if (defined('DOING_AJAX') && DOING_AJAX) {
+        return;
+    }
+    
+    if (isset($_GET['action']) && $_GET['action'] === 'logout') {
+        return;
+    }
+    
+    // Chỉ áp dụng cho users đã login
+    if (!is_user_logged_in()) {
+        return;
+    }
+    
+    $user_id = get_current_user_id();
+    $login_source = get_user_meta($user_id, '_shopcar_login_source', true);
+    
+    // Nếu user có quyền admin (manage_options), cho phép truy cập wp-admin
+    if (current_user_can('manage_options')) {
+        return;
+    }
+    
+    // Nếu user login từ frontend, redirect về frontend
+    if ($login_source === 'frontend') {
+        wp_safe_redirect(home_url('/?admin_redirect=1'));
+        exit;
+    }
+}, 1);
+
+// Khi logout, xóa flag
+add_action('wp_logout', function() {
+    $user_id = get_current_user_id();
+    if ($user_id) {
+        delete_user_meta($user_id, '_shopcar_login_source');
+    }
+});
+
 
 
 
@@ -558,13 +619,24 @@ add_action('init', function () {
 // Start nhhh/1-login
 function shopcar_scripts()
 {
+    // Đảm bảo jQuery được load trước
     wp_enqueue_script('jquery');
 
+    // Sửa đường dẫn đúng đến file jQuery UI trong thư mục vendor
     wp_enqueue_script(
         'jquery-ui',
-        get_template_directory_uri() . '/assets/js/plugins/jquery-ui.min.js',
+        get_template_directory_uri() . '/assets/js/vendor/jquery-ui.min.js',
         array('jquery'),
-        null,
+        '1.13.2',
+        true
+    );
+
+    // Enqueue imagesLoaded
+    wp_enqueue_script(
+        'imagesloaded',
+        get_template_directory_uri() . '/assets/js/vendor/imagesloaded.pkgd.min.js',
+        array('jquery'),
+        '4.1.4',
         true
     );
 
@@ -579,8 +651,8 @@ function shopcar_scripts()
     wp_enqueue_script(
         'main',
         get_template_directory_uri() . '/assets/js/main.js',
-        array('jquery', 'jquery-ui', 'bootstrap'),
-        null,
+        array('jquery', 'jquery-ui', 'imagesloaded', 'bootstrap'),
+        '1.0.0',
         true
     );
 }
@@ -765,9 +837,22 @@ add_action('wp_ajax_send_admin_message', 'shopcar_send_admin_message');
 
 // Enqueue chat assets
 function shopcar_enqueue_chat_assets() {
-    if (is_page_template('templates/chat/user-chat.php') || is_page_template('templates/chat/admin-chat.php') || is_front_page()) {
-        wp_enqueue_style('shopcar-chat', get_template_directory_uri() . '/assets/css/chat.css', array(), '1.0.0');
-        wp_enqueue_script('shopcar-chat', get_template_directory_uri() . '/assets/js/chat.js', array('jquery'), '1.0.0', true);
+    // Kiểm tra nhiều điều kiện để đảm bảo load trên trang chat
+    $is_chat_page = is_page_template('templates/chat/user-chat.php') 
+                    || is_page_template('templates/chat/admin-chat.php')
+                    || (is_page() && get_page_template_slug() === 'templates/chat/user-chat.php')
+                    || (is_page() && get_page_template_slug() === 'templates/chat/admin-chat.php')
+                    || (isset($_GET['page']) && $_GET['page'] === 'shopcar-chat');
+    
+    if ($is_chat_page || ($GLOBALS['pagenow'] === 'admin.php' && isset($_GET['page']) && $_GET['page'] === 'shopcar-chat')) {
+        // Đảm bảo jQuery được load trước
+        wp_enqueue_script('jquery');
+        
+        if (file_exists(get_template_directory() . '/assets/css/chat.css')) {
+            wp_enqueue_style('shopcar-chat', get_template_directory_uri() . '/assets/css/chat.css', array(), '1.0.2');
+        }
+        // Load chat.js với dependency jQuery, đảm bảo load sau jQuery
+        wp_enqueue_script('shopcar-chat', get_template_directory_uri() . '/assets/js/chat.js', array('jquery'), '1.0.2', true);
 
         wp_localize_script('shopcar-chat', 'shopcar_chat', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
@@ -775,7 +860,7 @@ function shopcar_enqueue_chat_assets() {
         ));
     }
 }
-add_action('wp_enqueue_scripts', 'shopcar_enqueue_chat_assets');
+add_action('wp_enqueue_scripts', 'shopcar_enqueue_chat_assets', 20); // Priority 20 để load sau shopcar_scripts
 
 // Add chat page template
 add_filter('page_template', function ($template) {
@@ -803,5 +888,14 @@ function shopcar_add_chat_admin_menu() {
 add_action('admin_menu', 'shopcar_add_chat_admin_menu');
 
 function shopcar_chat_admin_page() {
+    // Enqueue scripts for admin page
+    wp_enqueue_script('jquery');
+    wp_enqueue_script('shopcar-chat', get_template_directory_uri() . '/assets/js/chat.js', array('jquery'), '1.0.0', true);
+    
+    wp_localize_script('shopcar-chat', 'shopcar_chat', array(
+        'ajaxurl' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('shopcar_chat_nonce')
+    ));
+    
     include get_template_directory() . '/templates/chat/admin-chat.php';
 }
