@@ -899,3 +899,412 @@ function shopcar_chat_admin_page() {
     
     include get_template_directory() . '/templates/chat/admin-chat.php';
 }
+
+// ============================================
+// EMAIL REGISTRATION FOR NEW PRODUCTS
+// ============================================
+
+// Register custom post type for email subscriptions
+function shopcar_register_email_subscription_post_type() {
+    register_post_type('email_subscription', array(
+        'labels' => array(
+            'name' => 'Email Đăng ký',
+            'singular_name' => 'Email Đăng ký',
+        ),
+        'public' => false,
+        'show_ui' => true,
+        'show_in_menu' => true,
+        'menu_icon' => 'dashicons-email-alt',
+        'supports' => array('title'),
+        'capability_type' => 'post',
+    ));
+}
+add_action('init', 'shopcar_register_email_subscription_post_type');
+
+// AJAX handler: Đăng ký email
+function shopcar_register_email_subscription() {
+    check_ajax_referer('shopcar_email_subscription_nonce', 'nonce');
+    
+    $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
+    
+    if (empty($email) || !is_email($email)) {
+        wp_send_json_error(array('message' => 'Email không hợp lệ.'));
+    }
+    
+    // Kiểm tra email đã tồn tại chưa
+    $existing = get_posts(array(
+        'post_type' => 'email_subscription',
+        'post_status' => 'publish',
+        'meta_query' => array(
+            array(
+                'key' => '_email_address',
+                'value' => $email,
+                'compare' => '='
+            )
+        ),
+        'posts_per_page' => 1
+    ));
+    
+    if (!empty($existing)) {
+        wp_send_json_error(array('message' => 'Email này đã được đăng ký rồi.'));
+    }
+    
+    // Tạo subscription mới
+    $post_id = wp_insert_post(array(
+        'post_type' => 'email_subscription',
+        'post_title' => $email,
+        'post_status' => 'publish'
+    ));
+    
+    if (is_wp_error($post_id)) {
+        wp_send_json_error(array('message' => 'Có lỗi xảy ra. Vui lòng thử lại.'));
+    }
+    
+    // Lưu email address và thời gian đăng ký
+    update_post_meta($post_id, '_email_address', $email);
+    update_post_meta($post_id, '_subscription_date', current_time('mysql'));
+    update_post_meta($post_id, '_is_active', '1');
+    
+    wp_send_json_success(array('message' => 'Đăng ký thành công! Bạn sẽ nhận được thông báo khi có sản phẩm mới.'));
+}
+add_action('wp_ajax_shopcar_register_email_subscription', 'shopcar_register_email_subscription');
+add_action('wp_ajax_nopriv_shopcar_register_email_subscription', 'shopcar_register_email_subscription');
+
+// Gửi email thông báo khi có sản phẩm mới
+function shopcar_notify_new_product($post_id) {
+    // Chỉ xử lý khi sản phẩm được publish lần đầu
+    if (get_post_type($post_id) !== 'product') {
+        return;
+    }
+    
+    // Kiểm tra xem đã gửi thông báo chưa
+    if (get_post_meta($post_id, '_new_product_notified', true) === '1') {
+        return;
+    }
+    
+    // Lấy thông tin sản phẩm
+    $product = wc_get_product($post_id);
+    if (!$product) {
+        return;
+    }
+    
+    $product_name = $product->get_name();
+    $product_url = get_permalink($post_id);
+    $product_price = $product->get_price_html();
+    $product_image = get_the_post_thumbnail_url($post_id, 'medium');
+    
+    // Lấy danh sách email đăng ký
+    $subscriptions = get_posts(array(
+        'post_type' => 'email_subscription',
+        'post_status' => 'publish',
+        'posts_per_page' => -1,
+        'meta_query' => array(
+            array(
+                'key' => '_is_active',
+                'value' => '1',
+                'compare' => '='
+            )
+        )
+    ));
+    
+    if (empty($subscriptions)) {
+        return;
+    }
+    
+    $site_name = get_bloginfo('name');
+    $site_url = home_url();
+    
+    // Gửi email cho từng subscriber
+    $sent_count = 0;
+    foreach ($subscriptions as $subscription) {
+        $email = get_post_meta($subscription->ID, '_email_address', true);
+        
+        if (empty($email) || !is_email($email)) {
+            continue;
+        }
+        
+        $subject = sprintf('[%s] Sản phẩm mới: %s', $site_name, $product_name);
+        
+        $message = sprintf(
+            "Xin chào,\n\n" .
+            "Chúng tôi vui mừng thông báo về sản phẩm mới:\n\n" .
+            "Tên sản phẩm: %s\n" .
+            "Giá: %s\n" .
+            "Xem chi tiết: %s\n\n" .
+            "Cảm ơn bạn đã quan tâm!\n\n" .
+            "Trân trọng,\n" .
+            "%s",
+            $product_name,
+            $product_price,
+            $product_url,
+            $site_name
+        );
+        
+        // HTML email
+        $html_message = sprintf(
+            '<!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: #007bff; color: white; padding: 20px; text-align: center; }
+                    .content { background: #f9f9f9; padding: 20px; }
+                    .product { background: white; padding: 20px; margin: 20px 0; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+                    .product-image { max-width: 100%%; height: auto; border-radius: 5px; margin-bottom: 15px; }
+                    .product-name { font-size: 24px; font-weight: bold; color: #007bff; margin-bottom: 10px; }
+                    .product-price { font-size: 20px; color: #28a745; font-weight: bold; margin-bottom: 15px; }
+                    .button { display: inline-block; padding: 12px 30px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; margin-top: 15px; }
+                    .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>%s</h1>
+                    </div>
+                    <div class="content">
+                        <h2>Sản phẩm mới!</h2>
+                        <p>Chúng tôi vui mừng thông báo về sản phẩm mới:</p>
+                        <div class="product">
+                            %s
+                            <div class="product-name">%s</div>
+                            <div class="product-price">%s</div>
+                            <a href="%s" class="button">Xem chi tiết</a>
+                        </div>
+                        <p>Cảm ơn bạn đã quan tâm!</p>
+                    </div>
+                    <div class="footer">
+                        <p>Bạn nhận được email này vì đã đăng ký nhận thông báo sản phẩm mới từ %s</p>
+                        <p><a href="%s?unsubscribe=%s">Hủy đăng ký</a></p>
+                    </div>
+                </div>
+            </body>
+            </html>',
+            $site_name,
+            $product_image ? '<img src="' . esc_url($product_image) . '" alt="' . esc_attr($product_name) . '" class="product-image">' : '',
+            esc_html($product_name),
+            $product_price,
+            esc_url($product_url),
+            $site_name,
+            home_url(),
+            base64_encode($email)
+        );
+        
+        $headers = array('Content-Type: text/html; charset=UTF-8');
+        
+        if (wp_mail($email, $subject, $html_message, $headers)) {
+            $sent_count++;
+        }
+    }
+    
+    // Đánh dấu đã gửi thông báo
+    update_post_meta($post_id, '_new_product_notified', '1');
+    update_post_meta($post_id, '_notification_sent_count', $sent_count);
+}
+// Hook khi sản phẩm được publish lần đầu
+add_action('transition_post_status', function($new_status, $old_status, $post) {
+    if ($new_status === 'publish' && $old_status !== 'publish' && $post->post_type === 'product') {
+        shopcar_notify_new_product($post->ID);
+    }
+}, 10, 3);
+
+// Admin menu để quản lý email subscriptions
+function shopcar_add_email_subscription_admin_menu() {
+    add_submenu_page(
+        'edit.php?post_type=email_subscription',
+        'Quản lý Email Đăng ký',
+        'Quản lý Email',
+        'manage_options',
+        'shopcar-email-subscriptions',
+        'shopcar_email_subscriptions_admin_page'
+    );
+}
+add_action('admin_menu', 'shopcar_add_email_subscription_admin_menu');
+
+// Shortcode để hiển thị form đăng ký email
+function shopcar_email_subscription_shortcode($atts) {
+    ob_start();
+    include get_template_directory() . '/templates/email-subscription-form.php';
+    return ob_get_clean();
+}
+add_shortcode('shopcar_email_subscription', 'shopcar_email_subscription_shortcode');
+
+// Xử lý unsubscribe từ email link
+add_action('init', function() {
+    if (isset($_GET['unsubscribe']) && !empty($_GET['unsubscribe'])) {
+        $email_encoded = sanitize_text_field($_GET['unsubscribe']);
+        $email = base64_decode($email_encoded);
+        
+        if (is_email($email)) {
+            $subscriptions = get_posts(array(
+                'post_type' => 'email_subscription',
+                'meta_query' => array(
+                    array(
+                        'key' => '_email_address',
+                        'value' => $email,
+                        'compare' => '='
+                    )
+                ),
+                'posts_per_page' => 1
+            ));
+            
+            if (!empty($subscriptions)) {
+                update_post_meta($subscriptions[0]->ID, '_is_active', '0');
+                $unsubscribed = true;
+            } else {
+                $unsubscribed = false;
+            }
+            
+            // Hiển thị trang thông báo
+            get_header();
+            ?>
+            <div class="container mt-5 mb-5">
+                <div class="row justify-content-center">
+                    <div class="col-md-6">
+                        <div class="card" style="padding: 30px; text-align: center;">
+                            <?php if ($unsubscribed): ?>
+                                <div class="alert alert-success">
+                                    <h3>Đã hủy đăng ký thành công!</h3>
+                                    <p>Email <strong><?php echo esc_html($email); ?></strong> đã được hủy đăng ký nhận thông báo sản phẩm mới.</p>
+                                    <p>Bạn sẽ không còn nhận được email thông báo từ chúng tôi nữa.</p>
+                                </div>
+                            <?php else: ?>
+                                <div class="alert alert-warning">
+                                    <h3>Không tìm thấy email đăng ký</h3>
+                                    <p>Email này không có trong danh sách đăng ký của chúng tôi.</p>
+                                </div>
+                            <?php endif; ?>
+                            <p><a href="<?php echo home_url(); ?>" class="btn btn-primary">Về trang chủ</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php
+            get_footer();
+            exit;
+        }
+    }
+});
+
+// Enqueue script cho form subscription
+function shopcar_enqueue_subscription_scripts() {
+    if (is_singular() || is_home() || is_front_page()) {
+        wp_enqueue_script('jquery');
+    }
+}
+add_action('wp_enqueue_scripts', 'shopcar_enqueue_subscription_scripts');
+
+function shopcar_email_subscriptions_admin_page() {
+    // Xử lý unsubscribe
+    if (isset($_GET['unsubscribe']) && isset($_GET['_wpnonce']) && wp_verify_nonce($_GET['_wpnonce'], 'unsubscribe_email')) {
+        $email = sanitize_email($_GET['unsubscribe']);
+        $subscriptions = get_posts(array(
+            'post_type' => 'email_subscription',
+            'meta_query' => array(
+                array(
+                    'key' => '_email_address',
+                    'value' => $email,
+                    'compare' => '='
+                )
+            ),
+            'posts_per_page' => 1
+        ));
+        
+        if (!empty($subscriptions)) {
+            update_post_meta($subscriptions[0]->ID, '_is_active', '0');
+            echo '<div class="notice notice-success"><p>Đã hủy đăng ký thành công!</p></div>';
+        }
+    }
+    
+    // Xử lý activate lại
+    if (isset($_GET['activate']) && isset($_GET['_wpnonce']) && wp_verify_nonce($_GET['_wpnonce'], 'activate_email')) {
+        $email = sanitize_email($_GET['activate']);
+        $subscriptions = get_posts(array(
+            'post_type' => 'email_subscription',
+            'meta_query' => array(
+                array(
+                    'key' => '_email_address',
+                    'value' => $email,
+                    'compare' => '='
+                )
+            ),
+            'posts_per_page' => 1
+        ));
+        
+        if (!empty($subscriptions)) {
+            update_post_meta($subscriptions[0]->ID, '_is_active', '1');
+            echo '<div class="notice notice-success"><p>Đã kích hoạt lại đăng ký thành công!</p></div>';
+        }
+    }
+    
+    // Lấy danh sách subscriptions
+    $subscriptions = get_posts(array(
+        'post_type' => 'email_subscription',
+        'post_status' => 'publish',
+        'posts_per_page' => -1,
+        'orderby' => 'date',
+        'order' => 'DESC'
+    ));
+    
+    ?>
+    <div class="wrap">
+        <h1>Quản lý Email Đăng ký Sản phẩm Mới</h1>
+        
+        <div class="tablenav top">
+            <div class="alignleft actions">
+                <p>Tổng số email đăng ký: <strong><?php echo count($subscriptions); ?></strong></p>
+            </div>
+        </div>
+        
+        <table class="wp-list-table widefat fixed striped">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Ngày đăng ký</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($subscriptions)): ?>
+                    <tr>
+                        <td colspan="4">Chưa có email nào đăng ký.</td>
+                    </tr>
+                <?php else: ?>
+                    <?php foreach ($subscriptions as $sub): 
+                        $email = get_post_meta($sub->ID, '_email_address', true);
+                        $date = get_post_meta($sub->ID, '_subscription_date', true);
+                        $is_active = get_post_meta($sub->ID, '_is_active', true);
+                    ?>
+                        <tr>
+                            <td><?php echo esc_html($email); ?></td>
+                            <td><?php echo $date ? date('d/m/Y H:i', strtotime($date)) : 'N/A'; ?></td>
+                            <td>
+                                <?php if ($is_active === '1'): ?>
+                                    <span style="color: green;">✓ Đang hoạt động</span>
+                                <?php else: ?>
+                                    <span style="color: red;">✗ Đã hủy</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ($is_active === '1'): ?>
+                                    <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=shopcar-email-subscriptions&unsubscribe=' . urlencode($email)), 'unsubscribe_email'); ?>" 
+                                       onclick="return confirm('Bạn có chắc muốn hủy đăng ký email này?');">
+                                        Hủy đăng ký
+                                    </a>
+                                <?php else: ?>
+                                    <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=shopcar-email-subscriptions&activate=' . urlencode($email)), 'activate_email'); ?>">
+                                        Kích hoạt lại
+                                    </a>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+    <?php
+}
