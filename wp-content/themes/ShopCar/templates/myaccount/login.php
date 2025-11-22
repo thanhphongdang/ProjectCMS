@@ -1,4 +1,5 @@
 <?php
+ob_start();
 defined('ABSPATH') || exit;
 
 get_header();
