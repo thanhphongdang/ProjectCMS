@@ -10,7 +10,7 @@
 <body <?php body_class(); ?>>
     <?php wp_body_open(); ?>
 
-     <header class="header axil-header header-style-1" style="background:white;">
+    <header class="header axil-header header-style-1" style="background:white;">
         <div class="axil-mainmenu">
             <div class="container">
                 <div class="header-navbar" style="display:flex; align-items:center; justify-content:space-between;">
@@ -83,11 +83,11 @@
                                                     <strong><?php echo esc_html($current_user->display_name); ?></strong>
                                                 </li>
                                                 <li>
-                                                    <a
-                                                        href="<?php echo wc_get_endpoint_url('edit-account', '', wc_get_page_permalink('myaccount')); ?>">
+                                                    <a href="<?php echo site_url('/change-password'); ?>">
                                                         Đổi mật khẩu
                                                     </a>
                                                 </li>
+
 
                                                 <li class="separator"></li>
 
@@ -244,11 +244,11 @@
 
             <!-- JS FIX -->
             <script>
-                jQuery(document).ready(function ($) {
+                jQuery(document).ready(function($) {
 
                     $('body').off('click', '.axil-search');
 
-                    $(document).on('click', '.search-toggle', function (e) {
+                    $(document).on('click', '.search-toggle', function(e) {
                         e.preventDefault();
                         $('.header-search-box').fadeToggle(150);
                     });
@@ -256,7 +256,7 @@
                 });
             </script>
 
-            </header>
-            =======
-            </header>
-            >>>>>>> nhhh/1-chat-support
+    </header>
+    =======
+    </header>
+    >>>>>>> nhhh/1-chat-support
