@@ -10,7 +10,7 @@
 <body <?php body_class(); ?>>
     <?php wp_body_open(); ?>
 
-     <header class="header axil-header header-style-1" style="background:white;">
+    <header class="header axil-header header-style-1" style="background:white;">
         <div class="axil-mainmenu">
             <div class="container">
                 <div class="header-navbar" style="display:flex; align-items:center; justify-content:space-between;">
@@ -39,11 +39,8 @@
                         ?>
                     </nav>
 
-
-
                     <!-- RIGHT AREA -->
                     <div class="header-action" style="position:relative;">
-
                         <ul class="action-list" style="gap:18px; display:flex; align-items:center;">
 
                             <!-- Header Right Icons -->
@@ -97,26 +94,6 @@
                                                         Đăng xuất
                                                     </a>
 
-                                                </li>
-
-                                            <?php else: ?>
-
-                                                <li>
-                                                    <a href="<?php echo site_url('/login'); ?>">
-                                                        Đăng nhập
-                                                    </a>
-                                                </li>
-
-                                                <li>
-                                                    <a href="<?php echo site_url('/register'); ?>">
-                                                        Đăng ký
-                                                    </a>
-                                                </li>
-
-                                                <li>
-                                                    <a href="<?php echo site_url('/forgot-password'); ?>">
-                                                        Quên mật khẩu
-                                                    </a>
                                                 </li>
 
                                             <?php endif; ?>
@@ -239,24 +216,22 @@
                 </div>
             </div>
         </div>
-        <<<<<<< HEAD </div>
+        </div>
 
 
-            <!-- JS FIX -->
-            <script>
-                jQuery(document).ready(function ($) {
+        <!-- JS FIX -->
+        <script>
+            jQuery(document).ready(function ($) {
 
-                    $('body').off('click', '.axil-search');
+                $('body').off('click', '.axil-search');
 
-                    $(document).on('click', '.search-toggle', function (e) {
-                        e.preventDefault();
-                        $('.header-search-box').fadeToggle(150);
-                    });
-
+                $(document).on('click', '.search-toggle', function (e) {
+                    e.preventDefault();
+                    $('.header-search-box').fadeToggle(150);
                 });
-            </script>
 
-            </header>
-            =======
-            </header>
-            >>>>>>> nhhh/1-chat-support
+            });
+        </script>
+
+    </header>
+</body>
