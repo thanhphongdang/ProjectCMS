@@ -9,3 +9,61 @@ License: GNU General Public License v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: ShopCar
 */
+
+/* ================================================
+   FIX ICON BỊ ẨN TRONG style.min.css
+================================================ */
+
+.header-action ul.action-list li {
+    display: inline-block !important;
+}
+
+/* Hiển thị từng icon */
+.header-action ul.action-list li.axil-search,
+.header-action ul.action-list li.menu-account,
+.header-action ul.action-list li.axil-cart {
+    display: inline-block !important;
+}
+
+/* ================================================
+   FIX SEARCH BOX (phiên bản đúng)
+================================================ */
+
+/* Mặc định ẩn */
+.header-search-box {
+    display: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: 0.25s ease;
+}
+
+/* Khi có class OPEN → hiện ra */
+.header-search-box.open {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0) !important;
+}
+
+/* ================================================
+   Đảm bảo icon luôn hiển thị
+================================================ */
+
+.header-action ul.action-list li {
+    display: inline-block !important;
+}
+
+/* ================================================
+   🔥 THÊM MỚI – HIỂN THỊ ICON SEARCH CUSTOM
+================================================ */
+
+.menu-search {
+    display: inline-block !important;
+}
+
+.menu-search i {
+    font-size: 20px;
+    color: #292930;
+    cursor: pointer;
+}
