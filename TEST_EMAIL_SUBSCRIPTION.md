@@ -147,3 +147,4 @@ Mở file `footer.php` hoặc template muốn thêm, thêm:
 - Nếu update sản phẩm, không gửi lại email
 - Muốn test lại, xóa meta `_new_product_notified` của sản phẩm
 
+
