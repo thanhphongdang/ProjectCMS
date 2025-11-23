@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ShopCar Theme setup and assets enqueue
  */
@@ -112,18 +113,18 @@ add_filter('page_template', function ($template) {
 });
 
 // Thêm rewrite rule cho /login và /register để load template tùy chỉnh mà không cần tạo page
-add_action('init', function() {
+add_action('init', function () {
     add_rewrite_rule('^login/?$', 'index.php?custom_login=1', 'top');
     add_rewrite_rule('^register/?$', 'index.php?custom_register=1', 'top');
 });
 
-add_filter('query_vars', function($vars) {
+add_filter('query_vars', function ($vars) {
     $vars[] = 'custom_login';
     $vars[] = 'custom_register';
     return $vars;
 });
 
-add_filter('template_include', function($template) {
+add_filter('template_include', function ($template) {
     if (get_query_var('custom_login')) {
         return get_template_directory() . '/templates/myaccount/login.php';
     }
@@ -163,7 +164,6 @@ function shopcar_track_product_views()
 }
 add_action('template_redirect', 'shopcar_track_product_views');
 
-
 function shopcar_append_view_count_to_price($price_html, $product)
 {
     if (!is_product()) {
@@ -186,7 +186,6 @@ function shopcar_append_view_count_to_price($price_html, $product)
     return $price_html . $view_block . $share_block;
 }
 add_filter('woocommerce_get_price_html', 'shopcar_append_view_count_to_price', 20, 2);
-
 
 function shopcar_product_view_styles()
 {
@@ -250,7 +249,7 @@ function shopcar_get_social_share_markup($product)
     $mailto = sprintf('mailto:?subject=%s&body=%s', rawurlencode($product->get_name()), $encoded);
 
     ob_start();
-    ?>
+?>
     <div class="yt-share-block" data-share-block>
         <button type="button" class="yt-share-trigger" data-share-toggle>
             <span class="yt-share-trigger__icon" aria-hidden="true">
@@ -314,7 +313,6 @@ function shopcar_get_social_share_markup($product)
 
     return ob_get_clean();
 }
-
 
 function shopcar_social_share_assets()
 {
@@ -542,52 +540,60 @@ add_action('init', function () {
 });
 // End bui-tham-ky/3-change-password
 
+// bui-tham-ky/4-forget-password
+add_filter('wp_mail_content_type', function () {
+    return "text/html";
+});
+// End bui-tham-ky/4-forget-password
+
 // Tách riêng login frontend và wp-admin
 // Khi login ở wp-admin, đánh dấu là login từ admin
-add_action('wp_login', function($user_login, $user) {
+add_action('wp_login', function ($user_login, $user) {
     // Kiểm tra nếu có nonce từ frontend form
     if (isset($_POST['shopcar_login_nonce'])) {
         // Login từ frontend - đã được set trong login.php
         return;
     }
-    
+
     // Nếu không có nonce frontend, có thể là login từ wp-admin
     // Kiểm tra referer hoặc request URI
     $referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
     $request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
-    
-    if (strpos($referer, '/wp-admin') !== false || 
+
+    if (
+        strpos($referer, '/wp-admin') !== false ||
         strpos($referer, '/wp-login.php') !== false ||
         strpos($request_uri, '/wp-admin') !== false ||
-        strpos($request_uri, '/wp-login.php') !== false) {
+        strpos($request_uri, '/wp-login.php') !== false
+    ) {
         update_user_meta($user->ID, '_shopcar_login_source', 'admin');
     }
 }, 10, 2);
 
 // Chặn truy cập wp-admin nếu user login từ frontend (trừ admin users)
-add_action('admin_init', function() {
+add_action('admin_init', function () {
     // Bỏ qua nếu đang ở AJAX hoặc đang logout
     if (defined('DOING_AJAX') && DOING_AJAX) {
         return;
     }
-    
+
     if (isset($_GET['action']) && $_GET['action'] === 'logout') {
         return;
     }
-    
+
     // Chỉ áp dụng cho users đã login
     if (!is_user_logged_in()) {
         return;
     }
-    
+
     $user_id = get_current_user_id();
     $login_source = get_user_meta($user_id, '_shopcar_login_source', true);
-    
+
     // Nếu user có quyền admin (manage_options), cho phép truy cập wp-admin
     if (current_user_can('manage_options')) {
         return;
     }
-    
+
     // Nếu user login từ frontend, redirect về frontend
     if ($login_source === 'frontend') {
         wp_safe_redirect(home_url('/?admin_redirect=1'));
@@ -596,7 +602,7 @@ add_action('admin_init', function() {
 }, 1);
 
 // Khi logout, xóa flag
-add_action('wp_logout', function() {
+add_action('wp_logout', function () {
     $user_id = get_current_user_id();
     if ($user_id) {
         delete_user_meta($user_id, '_shopcar_login_source');
@@ -659,7 +665,8 @@ function shopcar_scripts()
 add_action('wp_enqueue_scripts', 'shopcar_scripts');
 
 // Chat Support System
-function shopcar_register_chat_post_type() {
+function shopcar_register_chat_post_type()
+{
     register_post_type('support_chat', array(
         'labels' => array(
             'name' => 'Chat Hỗ trợ',
@@ -675,7 +682,8 @@ function shopcar_register_chat_post_type() {
 add_action('init', 'shopcar_register_chat_post_type');
 
 // AJAX handlers for chat
-function shopcar_send_chat_message() {
+function shopcar_send_chat_message()
+{
     check_ajax_referer('shopcar_chat_nonce', 'nonce');
 
     if (!is_user_logged_in()) {
@@ -730,7 +738,8 @@ function shopcar_send_chat_message() {
 }
 add_action('wp_ajax_send_chat_message', 'shopcar_send_chat_message');
 
-function shopcar_get_chat_messages() {
+function shopcar_get_chat_messages()
+{
     check_ajax_referer('shopcar_chat_nonce', 'nonce');
 
     $chat_id = isset($_POST['chat_id']) ? intval($_POST['chat_id']) : 0;
@@ -775,7 +784,8 @@ function shopcar_get_chat_messages() {
 add_action('wp_ajax_get_chat_messages', 'shopcar_get_chat_messages');
 
 // Admin AJAX handlers
-function shopcar_get_admin_chats() {
+function shopcar_get_admin_chats()
+{
     if (!current_user_can('manage_options')) {
         wp_die('Unauthorized');
     }
@@ -809,7 +819,8 @@ function shopcar_get_admin_chats() {
 }
 add_action('wp_ajax_get_admin_chats', 'shopcar_get_admin_chats');
 
-function shopcar_send_admin_message() {
+function shopcar_send_admin_message()
+{
     check_ajax_referer('shopcar_chat_nonce', 'nonce');
 
     if (!current_user_can('manage_options')) {
@@ -836,18 +847,19 @@ function shopcar_send_admin_message() {
 add_action('wp_ajax_send_admin_message', 'shopcar_send_admin_message');
 
 // Enqueue chat assets
-function shopcar_enqueue_chat_assets() {
+function shopcar_enqueue_chat_assets()
+{
     // Kiểm tra nhiều điều kiện để đảm bảo load trên trang chat
-    $is_chat_page = is_page_template('templates/chat/user-chat.php') 
-                    || is_page_template('templates/chat/admin-chat.php')
-                    || (is_page() && get_page_template_slug() === 'templates/chat/user-chat.php')
-                    || (is_page() && get_page_template_slug() === 'templates/chat/admin-chat.php')
-                    || (isset($_GET['page']) && $_GET['page'] === 'shopcar-chat');
-    
+    $is_chat_page = is_page_template('templates/chat/user-chat.php')
+        || is_page_template('templates/chat/admin-chat.php')
+        || (is_page() && get_page_template_slug() === 'templates/chat/user-chat.php')
+        || (is_page() && get_page_template_slug() === 'templates/chat/admin-chat.php')
+        || (isset($_GET['page']) && $_GET['page'] === 'shopcar-chat');
+
     if ($is_chat_page || ($GLOBALS['pagenow'] === 'admin.php' && isset($_GET['page']) && $_GET['page'] === 'shopcar-chat')) {
         // Đảm bảo jQuery được load trước
         wp_enqueue_script('jquery');
-        
+
         if (file_exists(get_template_directory() . '/assets/css/chat.css')) {
             wp_enqueue_style('shopcar-chat', get_template_directory_uri() . '/assets/css/chat.css', array(), '1.0.2');
         }
@@ -874,7 +886,8 @@ add_filter('page_template', function ($template) {
 });
 
 // Add admin menu for chat
-function shopcar_add_chat_admin_menu() {
+function shopcar_add_chat_admin_menu()
+{
     add_menu_page(
         'Chat Hỗ trợ',
         'Chat Hỗ trợ',
@@ -887,16 +900,17 @@ function shopcar_add_chat_admin_menu() {
 }
 add_action('admin_menu', 'shopcar_add_chat_admin_menu');
 
-function shopcar_chat_admin_page() {
+function shopcar_chat_admin_page()
+{
     // Enqueue scripts for admin page
     wp_enqueue_script('jquery');
     wp_enqueue_script('shopcar-chat', get_template_directory_uri() . '/assets/js/chat.js', array('jquery'), '1.0.0', true);
-    
+
     wp_localize_script('shopcar-chat', 'shopcar_chat', array(
         'ajaxurl' => admin_url('admin-ajax.php'),
         'nonce' => wp_create_nonce('shopcar_chat_nonce')
     ));
-    
+
     include get_template_directory() . '/templates/chat/admin-chat.php';
 }
 
@@ -905,7 +919,8 @@ function shopcar_chat_admin_page() {
 // ============================================
 
 // Register custom post type for email subscriptions
-function shopcar_register_email_subscription_post_type() {
+function shopcar_register_email_subscription_post_type()
+{
     register_post_type('email_subscription', array(
         'labels' => array(
             'name' => 'Email Đăng ký',
@@ -922,15 +937,16 @@ function shopcar_register_email_subscription_post_type() {
 add_action('init', 'shopcar_register_email_subscription_post_type');
 
 // AJAX handler: Đăng ký email
-function shopcar_register_email_subscription() {
+function shopcar_register_email_subscription()
+{
     check_ajax_referer('shopcar_email_subscription_nonce', 'nonce');
-    
+
     $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
-    
+
     if (empty($email) || !is_email($email)) {
         wp_send_json_error(array('message' => 'Email không hợp lệ.'));
     }
-    
+
     // Kiểm tra email đã tồn tại chưa
     $existing = get_posts(array(
         'post_type' => 'email_subscription',
@@ -944,55 +960,56 @@ function shopcar_register_email_subscription() {
         ),
         'posts_per_page' => 1
     ));
-    
+
     if (!empty($existing)) {
         wp_send_json_error(array('message' => 'Email này đã được đăng ký rồi.'));
     }
-    
+
     // Tạo subscription mới
     $post_id = wp_insert_post(array(
         'post_type' => 'email_subscription',
         'post_title' => $email,
         'post_status' => 'publish'
     ));
-    
+
     if (is_wp_error($post_id)) {
         wp_send_json_error(array('message' => 'Có lỗi xảy ra. Vui lòng thử lại.'));
     }
-    
+
     // Lưu email address và thời gian đăng ký
     update_post_meta($post_id, '_email_address', $email);
     update_post_meta($post_id, '_subscription_date', current_time('mysql'));
     update_post_meta($post_id, '_is_active', '1');
-    
+
     wp_send_json_success(array('message' => 'Đăng ký thành công! Bạn sẽ nhận được thông báo khi có sản phẩm mới.'));
 }
 add_action('wp_ajax_shopcar_register_email_subscription', 'shopcar_register_email_subscription');
 add_action('wp_ajax_nopriv_shopcar_register_email_subscription', 'shopcar_register_email_subscription');
 
 // Gửi email thông báo khi có sản phẩm mới
-function shopcar_notify_new_product($post_id) {
+function shopcar_notify_new_product($post_id)
+{
     // Chỉ xử lý khi sản phẩm được publish lần đầu
     if (get_post_type($post_id) !== 'product') {
         return;
     }
-    
+
     // Kiểm tra xem đã gửi thông báo chưa
     if (get_post_meta($post_id, '_new_product_notified', true) === '1') {
         return;
     }
-    
+
     // Lấy thông tin sản phẩm
     $product = wc_get_product($post_id);
     if (!$product) {
         return;
     }
-    
+
     $product_name = $product->get_name();
     $product_url = get_permalink($post_id);
     $product_price = $product->get_price_html();
     $product_image = get_the_post_thumbnail_url($post_id, 'medium');
-    
+
     // Lấy danh sách email đăng ký
     $subscriptions = get_posts(array(
         'post_type' => 'email_subscription',
@@ -1006,40 +1023,40 @@ function shopcar_notify_new_product($post_id) {
             )
         )
     ));
-    
+
     if (empty($subscriptions)) {
         return;
     }
-    
+
     $site_name = get_bloginfo('name');
     $site_url = home_url();
-    
+
     // Gửi email cho từng subscriber
     $sent_count = 0;
     foreach ($subscriptions as $subscription) {
         $email = get_post_meta($subscription->ID, '_email_address', true);
-        
+
         if (empty($email) || !is_email($email)) {
             continue;
         }
-        
+
         $subject = sprintf('[%s] Sản phẩm mới: %s', $site_name, $product_name);
-        
+
         $message = sprintf(
             "Xin chào,\n\n" .
-            "Chúng tôi vui mừng thông báo về sản phẩm mới:\n\n" .
-            "Tên sản phẩm: %s\n" .
-            "Giá: %s\n" .
-            "Xem chi tiết: %s\n\n" .
-            "Cảm ơn bạn đã quan tâm!\n\n" .
-            "Trân trọng,\n" .
-            "%s",
+                "Chúng tôi vui mừng thông báo về sản phẩm mới:\n\n" .
+                "Tên sản phẩm: %s\n" .
+                "Giá: %s\n" .
+                "Xem chi tiết: %s\n\n" .
+                "Cảm ơn bạn đã quan tâm!\n\n" .
+                "Trân trọng,\n" .
+                "%s",
             $product_name,
             $product_price,
             $product_url,
             $site_name
         );
-        
+
         // HTML email
         $html_message = sprintf(
             '<!DOCTYPE html>
@@ -1091,27 +1108,28 @@ function shopcar_notify_new_product($post_id) {
             home_url(),
             base64_encode($email)
         );
-        
+
         $headers = array('Content-Type: text/html; charset=UTF-8');
-        
+
         if (wp_mail($email, $subject, $html_message, $headers)) {
             $sent_count++;
         }
     }
-    
+
     // Đánh dấu đã gửi thông báo
     update_post_meta($post_id, '_new_product_notified', '1');
     update_post_meta($post_id, '_notification_sent_count', $sent_count);
 }
 // Hook khi sản phẩm được publish lần đầu
-add_action('transition_post_status', function($new_status, $old_status, $post) {
+add_action('transition_post_status', function ($new_status, $old_status, $post) {
     if ($new_status === 'publish' && $old_status !== 'publish' && $post->post_type === 'product') {
         shopcar_notify_new_product($post->ID);
     }
 }, 10, 3);
 
 // Admin menu để quản lý email subscriptions
-function shopcar_add_email_subscription_admin_menu() {
+function shopcar_add_email_subscription_admin_menu()
+{
     add_submenu_page(
         'edit.php?post_type=email_subscription',
         'Quản lý Email Đăng ký',
@@ -1124,7 +1142,8 @@ function shopcar_add_email_subscription_admin_menu() {
 add_action('admin_menu', 'shopcar_add_email_subscription_admin_menu');
 
 // Shortcode để hiển thị form đăng ký email
-function shopcar_email_subscription_shortcode($atts) {
+function shopcar_email_subscription_shortcode($atts)
+{
     ob_start();
     include get_template_directory() . '/templates/email-subscription-form.php';
     return ob_get_clean();
@@ -1132,11 +1151,11 @@ function shopcar_email_subscription_shortcode($atts) {
 add_shortcode('shopcar_email_subscription', 'shopcar_email_subscription_shortcode');
 
 // Xử lý unsubscribe từ email link
-add_action('init', function() {
+add_action('init', function () {
     if (isset($_GET['unsubscribe']) && !empty($_GET['unsubscribe'])) {
         $email_encoded = sanitize_text_field($_GET['unsubscribe']);
         $email = base64_decode($email_encoded);
-        
+
         if (is_email($email)) {
             $subscriptions = get_posts(array(
                 'post_type' => 'email_subscription',
@@ -1149,17 +1168,17 @@ add_action('init', function() {
                 ),
                 'posts_per_page' => 1
             ));
-            
+
             if (!empty($subscriptions)) {
                 update_post_meta($subscriptions[0]->ID, '_is_active', '0');
                 $unsubscribed = true;
             } else {
                 $unsubscribed = false;
             }
-            
+
             // Hiển thị trang thông báo
             get_header();
-            ?>
+    ?>
             <div class="container mt-5 mb-5">
                 <div class="row justify-content-center">
                     <div class="col-md-6">
@@ -1181,7 +1200,7 @@ add_action('init', function() {
                     </div>
                 </div>
             </div>
-            <?php
+    <?php
             get_footer();
             exit;
         }
@@ -1189,14 +1208,16 @@ add_action('init', function() {
 });
 
 // Enqueue script cho form subscription
-function shopcar_enqueue_subscription_scripts() {
+function shopcar_enqueue_subscription_scripts()
+{
     if (is_singular() || is_home() || is_front_page()) {
         wp_enqueue_script('jquery');
     }
 }
 add_action('wp_enqueue_scripts', 'shopcar_enqueue_subscription_scripts');
 
-function shopcar_email_subscriptions_admin_page() {
+function shopcar_email_subscriptions_admin_page()
+{
     // Xử lý unsubscribe
     if (isset($_GET['unsubscribe']) && isset($_GET['_wpnonce']) && wp_verify_nonce($_GET['_wpnonce'], 'unsubscribe_email')) {
         $email = sanitize_email($_GET['unsubscribe']);
@@ -1211,13 +1232,13 @@ function shopcar_email_subscriptions_admin_page() {
             ),
             'posts_per_page' => 1
         ));
-        
+
         if (!empty($subscriptions)) {
             update_post_meta($subscriptions[0]->ID, '_is_active', '0');
             echo '<div class="notice notice-success"><p>Đã hủy đăng ký thành công!</p></div>';
         }
     }
-    
+
     // Xử lý activate lại
     if (isset($_GET['activate']) && isset($_GET['_wpnonce']) && wp_verify_nonce($_GET['_wpnonce'], 'activate_email')) {
         $email = sanitize_email($_GET['activate']);
@@ -1232,13 +1253,13 @@ function shopcar_email_subscriptions_admin_page() {
             ),
             'posts_per_page' => 1
         ));
-        
+
         if (!empty($subscriptions)) {
             update_post_meta($subscriptions[0]->ID, '_is_active', '1');
             echo '<div class="notice notice-success"><p>Đã kích hoạt lại đăng ký thành công!</p></div>';
         }
     }
-    
+
     // Lấy danh sách subscriptions
     $subscriptions = get_posts(array(
         'post_type' => 'email_subscription',
@@ -1247,17 +1268,17 @@ function shopcar_email_subscriptions_admin_page() {
         'orderby' => 'date',
         'order' => 'DESC'
     ));
-    
+
     ?>
     <div class="wrap">
         <h1>Quản lý Email Đăng ký Sản phẩm Mới</h1>
-        
+
         <div class="tablenav top">
             <div class="alignleft actions">
                 <p>Tổng số email đăng ký: <strong><?php echo count($subscriptions); ?></strong></p>
             </div>
         </div>
-        
+
         <table class="wp-list-table widefat fixed striped">
             <thead>
                 <tr>
@@ -1273,7 +1294,7 @@ function shopcar_email_subscriptions_admin_page() {
                         <td colspan="4">Chưa có email nào đăng ký.</td>
                     </tr>
                 <?php else: ?>
-                    <?php foreach ($subscriptions as $sub): 
+                    <?php foreach ($subscriptions as $sub):
                         $email = get_post_meta($sub->ID, '_email_address', true);
                         $date = get_post_meta($sub->ID, '_subscription_date', true);
                         $is_active = get_post_meta($sub->ID, '_is_active', true);
@@ -1290,8 +1311,8 @@ function shopcar_email_subscriptions_admin_page() {
                             </td>
                             <td>
                                 <?php if ($is_active === '1'): ?>
-                                    <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=shopcar-email-subscriptions&unsubscribe=' . urlencode($email)), 'unsubscribe_email'); ?>" 
-                                       onclick="return confirm('Bạn có chắc muốn hủy đăng ký email này?');">
+                                    <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=shopcar-email-subscriptions&unsubscribe=' . urlencode($email)), 'unsubscribe_email'); ?>"
+                                        onclick="return confirm('Bạn có chắc muốn hủy đăng ký email này?');">
                                         Hủy đăng ký
                                     </a>
                                 <?php else: ?>
@@ -1306,5 +1327,5 @@ function shopcar_email_subscriptions_admin_page() {
             </tbody>
         </table>
     </div>
-    <?php
+<?php
 }
