@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Template: Single Product Content (Car Version – Premium Light UI)
  */
@@ -32,101 +33,101 @@ if ($product->is_on_sale()) {
      PREMIUM LIGHT UI FOR SINGLE PRODUCT PAGE
 ============================================================ -->
 <style>
-/* ===== GLOBAL WRAPPER ===== */
-.single-product-area,
-.product-comments {
-    background: #ffffff;
-    color: #222;
-    padding: 30px;
-    border-radius: 16px;
-    margin-top: 30px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-}
+    /* ===== GLOBAL WRAPPER ===== */
+    .single-product-area,
+    .product-comments {
+        background: #ffffff;
+        color: #222;
+        padding: 30px;
+        border-radius: 16px;
+        margin-top: 30px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    }
 
-.single-product-content h1,
-.product-title {
-    color: #0d2a4d !important;
-    font-weight: 800;
-    line-height: 1.2;
-}
+    .single-product-content h1,
+    .product-title {
+        color: #0d2a4d !important;
+        font-weight: 800;
+        line-height: 1.2;
+    }
 
-/* ===== TABLE ===== */
-.car-info-table table {
-    background: #f8f9fc;
-    border-radius: 12px;
-    overflow: hidden;
-}
+    /* ===== TABLE ===== */
+    .car-info-table table {
+        background: #f8f9fc;
+        border-radius: 12px;
+        overflow: hidden;
+    }
 
-.car-info-table table td {
-    background: #f8f9fc !important;
-    color: #333;
-    border-color: rgba(0,0,0,0.08);
-    padding: 12px 16px;
-    font-size: 15px;
-}
+    .car-info-table table td {
+        background: #f8f9fc !important;
+        color: #333;
+        border-color: rgba(0, 0, 0, 0.08);
+        padding: 12px 16px;
+        font-size: 15px;
+    }
 
-.car-info-table strong {
-    color: #0d6efd;
-}
+    .car-info-table strong {
+        color: #0d6efd;
+    }
 
-/* ===== PRICE ===== */
-.price-amount {
-    font-size: 28px;
-    color: #0d6efd;
-    font-weight: 900;
-    margin-bottom: 15px;
-}
+    /* ===== PRICE ===== */
+    .price-amount {
+        font-size: 28px;
+        color: #0d6efd;
+        font-weight: 900;
+        margin-bottom: 15px;
+    }
 
-/* ===== COMMENT FORM ===== */
-#shopcar-comment-form {
-    background: #f6f7fb;
-    padding: 20px;
-    border-radius: 14px;
-    border: 1px solid rgba(0,0,0,0.06);
-}
+    /* ===== COMMENT FORM ===== */
+    #shopcar-comment-form {
+        background: #f6f7fb;
+        padding: 20px;
+        border-radius: 14px;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+    }
 
-#shopcar-comment-form input,
-#shopcar-comment-form textarea {
-    background: #ffffff;
-    border: 1px solid rgba(0,0,0,0.1);
-    color: #222;
-}
+    #shopcar-comment-form input,
+    #shopcar-comment-form textarea {
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        color: #222;
+    }
 
-#shopcar-comment-form button {
-    background: #0d6efd;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-}
+    #shopcar-comment-form button {
+        background: #0d6efd;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+    }
 
-/* ===== COMMENT LIST ===== */
-.single-comment {
-    background: #f6f7fb;
-    padding: 16px;
-    border-radius: 10px;
-    margin-bottom: 18px;
-    border: 1px solid rgba(0,0,0,0.05);
-}
+    /* ===== COMMENT LIST ===== */
+    .single-comment {
+        background: #f6f7fb;
+        padding: 16px;
+        border-radius: 10px;
+        margin-bottom: 18px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
 
-.single-comment strong {
-    color: #0d6efd;
-    font-size: 16px;
-}
+    .single-comment strong {
+        color: #0d6efd;
+        font-size: 16px;
+    }
 
-.single-comment p {
-    margin: 6px 0 0;
-    color: #444;
-}
+    .single-comment p {
+        margin: 6px 0 0;
+        color: #444;
+    }
 
-.delete-comment {
-    margin-top: 8px;
-    background: #d90429 !important;
-    border: none;
-}
+    .delete-comment {
+        margin-top: 8px;
+        background: #d90429 !important;
+        border: none;
+    }
 
-.section-title-wrapper h2 {
-    color: #0d2a4d !important;
-}
+    .section-title-wrapper h2 {
+        color: #0d2a4d !important;
+    }
 </style>
 
 
@@ -143,7 +144,7 @@ if ($product->is_on_sale()) {
 
                 <?php if ($sale_percent): ?>
                     <span class="product-badge sale-badge"
-                          style="background:#d90429;color:white;padding:8px 14px;border-radius:8px;position:absolute;top:20px;left:20px;font-size:16px;font-weight:600;">
+                        style="background:#d90429;color:white;padding:8px 14px;border-radius:8px;position:absolute;top:20px;left:20px;font-size:16px;font-weight:600;">
                         -<?php echo $sale_percent; ?>%
                     </span>
                 <?php endif; ?>
@@ -235,8 +236,8 @@ if ($product->is_on_sale()) {
                              ⭐ BUTTON: PLACE ORDER (Option A)
                         ====================================== -->
                         <a href="<?php echo wc_get_checkout_url(); ?>?place_order_product=<?php echo $product->get_id(); ?>"
-                           class="btn btn-primary"
-                           style="
+                            class="btn btn-primary"
+                            style="
                                 margin-top:15px;
                                 display:inline-block;
                                 width:100%;
@@ -247,7 +248,7 @@ if ($product->is_on_sale()) {
                                 border-radius:8px;
                            ">
                             <!-- 🚗 Place Order -->
-                             Buy Now
+                            Buy Now
                         </a>
                         <!-- ===================================== -->
 
@@ -256,6 +257,44 @@ if ($product->is_on_sale()) {
                     <div class="product-meta-info pt--20">
                         <?php woocommerce_template_single_meta(); ?>
                     </div>
+
+                    <div class="product-wishlist mt--20">
+                        <a href="#"
+                            class="wishlist-btn"
+                            data-product-id="<?php echo get_the_ID(); ?>"
+                            style="
+            display:inline-flex;
+            align-items:center;
+            padding:10px 18px;
+            border:1px solid #000;
+            border-radius:30px;
+            font-weight:600;
+            cursor:pointer;
+       ">
+                            ❤️ Yêu thích
+                        </a>
+                    </div>
+
+                    <script>
+                        document.addEventListener("DOMContentLoaded", function() {
+                            const btn = document.querySelector(".wishlist-btn");
+
+                            if (btn) {
+                                btn.addEventListener("click", function(e) {
+                                    e.preventDefault();
+
+                                    let id = this.getAttribute("data-product-id");
+
+                                    fetch("<?php echo home_url('/wp-json/wishlist/add'); ?>?id=" + id)
+                                        .then(res => res.json())
+                                        .then(data => {
+                                            alert("Đã thêm vào danh sách yêu thích!");
+                                        });
+                                });
+                            }
+                        });
+                    </script>
+
 
                     <div class="product-desc-wrapper pt--40">
                         <?php woocommerce_output_product_data_tabs(); ?>
@@ -315,26 +354,27 @@ if ($product->is_on_sale()) {
 
     <div id="shopcar-comment-list">
         <?php
-            $comments = get_comments([
-                'post_id' => $product->get_id(),
-                'status'  => 'approve'
-            ]);
+        $comments = get_comments([
+            'post_id' => $product->get_id(),
+            'status'  => 'approve'
+        ]);
 
-            if ($comments):
-                foreach ($comments as $c):
+        if ($comments):
+            foreach ($comments as $c):
         ?>
-            <div class="single-comment mb--20" id="comment-<?php echo $c->comment_ID; ?>">
-                <strong><?php echo esc_html($c->comment_author); ?></strong>
-                <p><?php echo esc_html($c->comment_content); ?></p>
+                <div class="single-comment mb--20" id="comment-<?php echo $c->comment_ID; ?>">
+                    <strong><?php echo esc_html($c->comment_author); ?></strong>
+                    <p><?php echo esc_html($c->comment_content); ?></p>
 
-                <?php if (is_user_logged_in() && get_current_user_id() == $c->user_id || current_user_can('administrator')): ?>
-                    <button class="btn btn-sm btn-danger delete-comment"
+                    <?php if (is_user_logged_in() && get_current_user_id() == $c->user_id || current_user_can('administrator')): ?>
+                        <button class="btn btn-sm btn-danger delete-comment"
                             data-id="<?php echo $c->comment_ID; ?>">
-                        Xóa
-                    </button>
-                <?php endif; ?>
-            </div>
-        <?php endforeach; else: ?>
+                            Xóa
+                        </button>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach;
+        else: ?>
             <p style="color:#777;">Chưa có bình luận nào.</p>
         <?php endif; ?>
     </div>
@@ -342,42 +382,42 @@ if ($product->is_on_sale()) {
 
 
 <script>
-jQuery(document).ready(function($){
+    jQuery(document).ready(function($) {
 
-    $("#shopcar-comment-form").on("submit", function(e){
-        e.preventDefault();
+        $("#shopcar-comment-form").on("submit", function(e) {
+            e.preventDefault();
 
-        $.post(ShopCarAjax.ajax_url, {
-            action: "shopcar_add_comment",
-            product_id: $("input[name='product_id']").val(),
-            author: $("input[name='author']").val(),
-            email: $("input[name='email']").val(),
-            content: $("textarea[name='content']").val(),
-        }, function(res){
-            if(res.success){
-                location.reload();
-            } else {
-                alert(res.data);
-            }
+            $.post(ShopCarAjax.ajax_url, {
+                action: "shopcar_add_comment",
+                product_id: $("input[name='product_id']").val(),
+                author: $("input[name='author']").val(),
+                email: $("input[name='email']").val(),
+                content: $("textarea[name='content']").val(),
+            }, function(res) {
+                if (res.success) {
+                    location.reload();
+                } else {
+                    alert(res.data);
+                }
+            });
         });
-    });
 
-    $(".delete-comment").on("click", function(){
-        if (!confirm("Bạn chắc chắn muốn xóa?")) return;
+        $(".delete-comment").on("click", function() {
+            if (!confirm("Bạn chắc chắn muốn xóa?")) return;
 
-        const id = $(this).data("id");
+            const id = $(this).data("id");
 
-        $.post(ShopCarAjax.ajax_url, {
-            action: "shopcar_delete_comment",
-            comment_id: id,
-        }, function(res){
-            if(res.success){
-                $("#comment-"+id).remove();
-            } else {
-                alert(res.data);
-            }
+            $.post(ShopCarAjax.ajax_url, {
+                action: "shopcar_delete_comment",
+                comment_id: id,
+            }, function(res) {
+                if (res.success) {
+                    $("#comment-" + id).remove();
+                } else {
+                    alert(res.data);
+                }
+            });
         });
-    });
 
-});
+    });
 </script>

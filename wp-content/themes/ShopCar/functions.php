@@ -546,6 +546,70 @@ add_filter('wp_mail_content_type', function () {
 });
 // End bui-tham-ky/4-forget-password
 
+// bui-tham-ky/5-wishlist
+/* ==========================================================
+   API: Thêm sản phẩm vào Wishlist (Cookie)
+========================================================== */
+add_action('rest_api_init', function () {
+    register_rest_route('wishlist', '/add', [
+        'methods' => 'GET',
+        'callback' => function () {
+
+            // ID sản phẩm
+            $id = intval($_GET['id']);
+            if (!$id) return ['error' => 'Missing ID'];
+
+            // Lấy dữ liệu wishlist hiện tại
+            $wishlist = isset($_COOKIE['wishlist'])
+                ? json_decode(stripslashes($_COOKIE['wishlist']), true)
+                : [];
+
+            // Nếu chưa có thì thêm vào
+            if (!in_array($id, $wishlist)) {
+                $wishlist[] = $id;
+            }
+
+            // Lưu cookie 30 ngày
+            setcookie('wishlist', json_encode($wishlist), time() + 86400 * 30, "/");
+
+            return ['success' => true, 'wishlist' => $wishlist];
+        }
+    ]);
+});
+
+
+/* ==========================================================
+   API: Xóa sản phẩm khỏi Wishlist (Cookie)
+========================================================== */
+add_action('rest_api_init', function () {
+    register_rest_route('wishlist', '/remove', [
+        'methods' => 'GET',
+        'callback' => function () {
+
+            // ID sản phẩm
+            $id = intval($_GET['id']);
+            if (!$id) return ['error' => 'Missing ID'];
+
+            // Lấy danh sách hiện tại
+            $wishlist = isset($_COOKIE['wishlist'])
+                ? json_decode(stripslashes($_COOKIE['wishlist']), true)
+                : [];
+
+            // Loại bỏ sản phẩm
+            $wishlist = array_filter($wishlist, function ($pid) use ($id) {
+                return $pid != $id;
+            });
+
+            // Lưu lại cookie
+            setcookie('wishlist', json_encode($wishlist), time() + 86400 * 30, "/");
+
+            return ['success' => true];
+        }
+    ]);
+});
+
+// End bui-tham-ky/5-wishlist
+
 // Tách riêng login frontend và wp-admin
 // Khi login ở wp-admin, đánh dấu là login từ admin
 add_action('wp_login', function ($user_login, $user) {

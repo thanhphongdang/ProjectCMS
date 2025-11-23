@@ -1,6 +1,94 @@
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 
+<style>
+    /* === DROPDOWN UI CLEAN === */
+
+    .account-dropdown {
+        display: none !important;
+        position: absolute;
+        right: 0;
+        top: 45px;
+        background: #fff;
+        border: 1px solid #eee;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, .08);
+        border-radius: 12px;
+        padding: 0;
+        width: 220px;
+        z-index: 9999;
+        overflow: hidden;
+    }
+
+    /* Active */
+    .menu-account.active .account-dropdown {
+        display: block !important;
+    }
+
+    /* Header Xin chào */
+    .account-dropdown .dropdown-header {
+        font-size: 14px;
+        color: #444;
+        padding: 14px 16px;
+        background: #fafafa;
+        border-bottom: 1px solid #eee;
+        display: block;
+        font-weight: 500;
+    }
+
+    /* Item */
+    .account-dropdown li {
+        list-style: none;
+    }
+
+    .account-dropdown li a {
+        display: block;
+        padding: 14px 16px;
+        font-size: 15px;
+        color: #222;
+        text-decoration: none;
+        transition: 0.15s ease;
+    }
+
+    .account-dropdown li a:hover {
+        background: #f5f5f5;
+    }
+
+    /* Gạch phân cách */
+    .account-dropdown .separator {
+        height: 1px;
+        background: #eee;
+        margin: 4px 0;
+    }
+
+    /* Log Out */
+    .account-dropdown li a.text-danger {
+        color: #d90429 !important;
+        font-weight: 600;
+    }
+</style>
+
+<script>
+    jQuery(document).ready(function($) {
+
+        /* CLICK avatar toggle dropdown */
+        $(".account-toggle").on("click", function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(".menu-account").toggleClass("active");
+        });
+
+        /* Prevent close when clicking inside dropdown */
+        $(".account-dropdown").on("click", function(e) {
+            e.stopPropagation();
+        });
+
+        /* Click outside closes dropdown */
+        $(document).on("click", function() {
+            $(".menu-account").removeClass("active");
+        });
+    });
+</script>
+
 <head>
     <meta charset="<?php bloginfo('charset'); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,7 +103,6 @@
             <div class="container">
                 <div class="header-navbar" style="display:flex; align-items:center; justify-content:space-between;">
 
-
                     <!-- Logo -->
                     <div class="header-logo">
                         <a href="<?php echo home_url('/'); ?>">
@@ -24,12 +111,9 @@
                         </a>
                     </div>
 
-
                     <!-- MAIN MENU -->
                     <nav class="header-nav">
                         <?php
-
-
                         wp_nav_menu([
                             'theme_location' => 'primary',
                             'container' => false,
@@ -40,16 +124,19 @@
                     </nav>
 
                     <!-- RIGHT AREA -->
-                    <div class="header-action" style="position:relative;">
+                    <div class="header-action">
                         <ul class="action-list" style="gap:18px; display:flex; align-items:center;">
 
                             <!-- SEARCH ICON -->
                             <li class="menu-search">
-                                <a href="#" class="search-toggle"><i class="fas fa-search"></i></a>
+                                <a href="#" class="search-toggle">
+                                    <i class="fas fa-search"></i>
+                                </a>
                             </li>
 
                             <!-- USER ACCOUNT -->
                             <li class="axil-user-area menu-account">
+
                                 <a href="javascript:void(0)" class="account-toggle">
                                     <?php if (is_user_logged_in()):
                                         $current_user = wp_get_current_user();
@@ -60,19 +147,35 @@
                                         <i class="far fa-user" style="font-size:20px;"></i>
                                     <?php endif; ?>
                                 </a>
+
                                 <ul class="account-dropdown">
+
                                     <?php if (is_user_logged_in()): ?>
-                                        <li class="dropdown-header">👋 Xin chào
-                                            <strong><?php echo esc_html($current_user->display_name); ?></strong></li>
-                                        <li><a href="<?php echo site_url('/change-password'); ?>">Đổi mật khẩu</a></li>
+
+                                        <li class="dropdown-header">
+                                            👋 Xin chào <strong><?php echo esc_html($current_user->display_name); ?></strong>
+                                        </li>
+
+                                        <li><a href="<?php echo site_url('/yeu-thich'); ?>">Wishlist</a></li>
+                                        <li><a href="<?php echo site_url('/change-password'); ?>">Change Password</a></li>
+
                                         <li class="separator"></li>
-                                        <li><a class="text-danger"
-                                                href="<?php echo wp_logout_url(home_url('/login')); ?>">Đăng xuất</a></li>
+
+                                        <li>
+                                            <a class="text-danger"
+                                                href="<?php echo wp_logout_url(home_url('/login')); ?>">
+                                                Log Out
+                                            </a>
+                                        </li>
+
                                     <?php else: ?>
-                                        <li><a href="<?php echo site_url('/login'); ?>">Đăng nhập</a></li>
-                                        <li><a href="<?php echo site_url('/register'); ?>">Đăng ký</a></li>
-                                        <li><a href="<?php echo site_url('/forgot-password'); ?>">Quên mật khẩu</a></li>
+
+                                        <li><a href="<?php echo site_url('/login'); ?>">Login</a></li>
+                                        <li><a href="<?php echo site_url('/register'); ?>">Register</a></li>
+                                        <li><a href="<?php echo site_url('/forgot-password'); ?>">Forgot Password</a></li>
+
                                     <?php endif; ?>
+
                                 </ul>
                             </li>
 
@@ -90,26 +193,9 @@
                         </ul>
                     </div>
 
-
                 </div>
             </div>
         </div>
-        </div>
-
-
-        <!-- JS FIX -->
-        <script>
-            jQuery(document).ready(function ($) {
-
-                $('body').off('click', '.axil-search');
-
-                $(document).on('click', '.search-toggle', function (e) {
-                    e.preventDefault();
-                    $('.header-search-box').fadeToggle(150);
-                });
-
-            });
-        </script>
-
     </header>
+
 </body>
