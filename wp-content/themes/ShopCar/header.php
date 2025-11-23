@@ -127,12 +127,43 @@
                     <div class="header-action">
                         <ul class="action-list" style="gap:18px; display:flex; align-items:center;">
 
+                        
                             <!-- SEARCH ICON -->
                             <li class="menu-search">
                                 <a href="#" class="search-toggle">
                                     <i class="fas fa-search"></i>
                                 </a>
                             </li>
+                            
+                            <!-- 🔍 SEARCH BOX  -->
+                    <div class="header-search-box" 
+                         style="display:none; position:absolute; top:35px; right:-10px; background:#fff;
+                                padding:18px; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.15);
+                                width:300px; animation:fadeIn 0.2s; z-index:9999;">
+                        
+                        <form role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>">
+                            
+                            <div style="display:flex; gap:10px;">
+
+                                <input type="search" name="s"
+                                       placeholder="Tìm xe theo tên, hãng hoặc giá..."
+                                       required
+                                       style="padding:12px 15px; flex:1; border:1px solid #ddd; border-radius:8px; font-size:14px;">
+
+                                <input type="hidden" name="post_type" value="product">
+
+                                <button type="submit"
+                                        style="padding:12px 15px; border:none; background:#000; 
+                                               color:#fff; border-radius:8px; cursor:pointer;">
+                                    <i class="fas fa-search"></i>
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
 
                             <!-- USER ACCOUNT -->
                             <li class="axil-user-area menu-account">
@@ -179,6 +210,8 @@
                                 </ul>
                             </li>
 
+                            
+
                             <!-- CART -->
                             <li class="axil-cart">
                                 <a href="<?php echo wc_get_cart_url(); ?>" class="cart-link" style="position:relative;">
@@ -194,8 +227,23 @@
                     </div>
 
                 </div>
+                
             </div>
         </div>
+
+        <!-- JS FIX -->
+<script>
+jQuery(document).ready(function($){
+
+    $('body').off('click', '.axil-search');
+
+    $(document).on('click', '.search-toggle', function(e){
+        e.preventDefault();
+        $('.header-search-box').fadeToggle(150);
+    });
+
+});
+</script>
     </header>
 
 </body>
