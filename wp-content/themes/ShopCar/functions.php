@@ -1531,3 +1531,112 @@ add_action('wp_enqueue_scripts', function() {
         'ajax_url' => admin_url('admin-ajax.php'),
     ]);
 });
+
+
+
+/* ============================================================
+ * 🟦 HÀM PLACE ORDER — Xử lý khi người dùng bấm nút Place Order
+ * - Xóa cart cũ
+ * - Thêm đúng sản phẩm vào cart
+ * - Chuyển sang trang Checkout
+ * ============================================================ */
+add_action('init', function () {
+
+    if (!isset($_GET['place_order_product'])) return;
+
+    $product_id = intval($_GET['place_order_product']);
+    if ($product_id <= 0) return;
+
+    // XÓA GIỎ HÀNG CŨ
+    WC()->cart->empty_cart();
+
+    // THÊM SẢN PHẨM ĐANG ĐẶT VÀO CART
+    WC()->cart->add_to_cart($product_id, 1);
+
+    // REDIRECT → CHECKOUT
+    wp_safe_redirect(wc_get_checkout_url());
+    exit;
+});
+
+
+/* ============================================================
+ * 🟥 HÀM CANCEL ORDER — Hủy đơn hàng (User/Admin)
+ * - Sử dụng URL: /my-account/?cancel_order=ORDER_ID
+ * ============================================================ */
+add_action('init', function () {
+
+    if (!isset($_GET['cancel_order'])) return;
+
+    $order_id = intval($_GET['cancel_order']);
+    if ($order_id <= 0) return;
+
+    $order = wc_get_order($order_id);
+    if (!$order) return;
+
+    // Kiểm tra quyền user có được hủy đơn không
+    if ($order->get_user_id() != get_current_user_id() && !current_user_can('administrator')) {
+        return; // Không có quyền
+    }
+
+    // Chỉ cho phép hủy nếu đơn đang pending hoặc on-hold
+    if (!in_array($order->get_status(), ['pending', 'on-hold'])) {
+        return;
+    }
+
+    // Hủy đơn
+    $order->update_status('cancelled', 'Order cancelled by user/admin.');
+
+    // Redirect về My Account
+    wp_safe_redirect(wc_get_page_permalink('myaccount'));
+    exit;
+});
+
+
+
+/* ============================================================
+ * 🟩 PAYMENT GATEWAY ẢO – Fake Payment
+ * ============================================================ */
+add_action('plugins_loaded', 'shopcar_load_fake_gateway');
+
+function shopcar_load_fake_gateway() {
+
+    if (!class_exists('WC_Payment_Gateway')) return;
+
+    class WC_Gateway_Fake extends WC_Payment_Gateway {
+
+        public function __construct() {
+            $this->id                 = 'fake_payment';
+            $this->method_title       = 'Thanh toán khi đặt xe (Fake)';
+            $this->method_description = 'Phương thức thanh toán ảo dành cho website bán xe.';
+            $this->title              = 'Thanh toán khi đặt xe';
+            $this->enabled            = 'yes';
+            $this->has_fields         = false;
+        }
+
+        public function process_payment($order_id) {
+
+            $order = wc_get_order($order_id);
+
+            // Set trạng thái đơn hàng thành "processing"
+            $order->update_status('pending', 'Fake payment completed.');
+
+            // Clear cart
+            WC()->cart->empty_cart();
+
+            // Redirect to Order Received
+            return array(
+                'result'   => 'success',
+                'redirect' => $this->get_return_url($order)
+            );
+        }
+    }
+}
+
+add_filter('woocommerce_payment_gateways', function($methods) {
+    $methods[] = 'WC_Gateway_Fake';
+    return $methods;
+});
+
+add_filter('woocommerce_cod_process_payment_order_status', function($status, $order) {
+    return 'pending'; // ép COD luôn ở trạng thái Pending
+}, 10, 2);
