@@ -1308,3 +1308,156 @@ function shopcar_email_subscriptions_admin_page() {
     </div>
     <?php
 }
+
+// Shortcode tra cứu đơn hàng
+function shopcar_order_tracking_shortcode() {
+    $output = '';
+    if (isset($_POST['shopcar_order_code'])) {
+        $order_code = sanitize_text_field($_POST['shopcar_order_code']);
+        $args = array(
+            'post_type' => 'shopcar_order',
+            'meta_query' => array(
+                array(
+                    'key' => 'order_code',
+                    'value' => $order_code,
+                    'compare' => '='
+                )
+            )
+        );
+        $query = new WP_Query($args);
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                $customer_name = get_post_meta(get_the_ID(), 'customer_name', true);
+                $customer_phone = get_post_meta(get_the_ID(), 'customer_phone', true);
+                $order_status = get_post_meta(get_the_ID(), 'order_status', true);
+                $order_products = get_post_meta(get_the_ID(), 'order_products', true);
+                $output .= '<div class="order-tracking-result">';
+                $output .= '<h3>Order Information</h3>';
+                $output .= '<p><strong>Order Code:</strong> ' . esc_html($order_code) . '</p>';
+                $output .= '<p><strong>Customer Name:</strong> ' . esc_html($customer_name) . '</p>';
+                $output .= '<p><strong>Customer Phone:</strong> ' . esc_html($customer_phone) . '</p>';
+                $output .= '<p><strong>Status:</strong> ' . esc_html(ucfirst($order_status)) . '</p>';
+                $output .= '<p><strong>Products:</strong> ' . esc_html($order_products) . '</p>';
+                $output .= '</div>';
+            }
+            wp_reset_postdata();
+        } else {
+            $output .= '<p style="color:red;">Order not found. Please check your code.</p>';
+        }
+    }
+    $output .= '<form method="post" class="order-tracking-form">';
+    $output .= '<label for="shopcar_order_code">Enter your order code:</label><br>';
+    $output .= '<input type="text" name="shopcar_order_code" id="shopcar_order_code" required style="width:250px;" />';
+    $output .= '<button type="submit">Track Order</button>';
+    $output .= '</form>';
+    return $output;
+}
+add_shortcode('shopcar_order_tracking', 'shopcar_order_tracking_shortcode');
+
+// Thêm meta box cho đơn hàng
+function shopcar_order_meta_boxes() {
+    add_meta_box(
+        'shopcar_order_details',
+        'Order Details',
+        'shopcar_order_details_callback',
+        'shopcar_order',
+        'normal',
+        'high'
+    );
+}
+add_action('add_meta_boxes', 'shopcar_order_meta_boxes');
+
+function shopcar_order_details_callback($post) {
+    $order_code = get_post_meta($post->ID, 'order_code', true);
+    $customer_name = get_post_meta($post->ID, 'customer_name', true);
+    $customer_phone = get_post_meta($post->ID, 'customer_phone', true);
+    $order_status = get_post_meta($post->ID, 'order_status', true);
+    $order_products = get_post_meta($post->ID, 'order_products', true);
+
+    ?>
+    <p>
+        <label for="order_code">Order Code:</label><br>
+        <input type="text" name="order_code" id="order_code" value="<?php echo esc_attr($order_code); ?>" style="width:100%;" />
+    </p>
+    <p>
+        <label for="customer_name">Customer Name:</label><br>
+        <input type="text" name="customer_name" id="customer_name" value="<?php echo esc_attr($customer_name); ?>" style="width:100%;" />
+    </p>
+    <p>
+        <label for="customer_phone">Customer Phone:</label><br>
+        <input type="text" name="customer_phone" id="customer_phone" value="<?php echo esc_attr($customer_phone); ?>" style="width:100%;" />
+    </p>
+    <p>
+        <label for="order_status">Order Status:</label><br>
+        <select name="order_status" id="order_status" style="width:100%;">
+            <option value="pending" <?php selected($order_status, 'pending'); ?>>Pending</option>
+            <option value="processing" <?php selected($order_status, 'processing'); ?>>Processing</option>
+            <option value="completed" <?php selected($order_status, 'completed'); ?>>Completed</option>
+            <option value="cancelled" <?php selected($order_status, 'cancelled'); ?>>Cancelled</option>
+        </select>
+    </p>
+    <p>
+        <label for="order_products">Products (comma separated):</label><br>
+        <input type="text" name="order_products" id="order_products" value="<?php echo esc_attr($order_products); ?>" style="width:100%;" />
+    </p>
+    <?php
+}
+
+// Lưu dữ liệu meta box
+function shopcar_save_order_meta($post_id) {
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+    if (isset($_POST['order_code'])) {
+        update_post_meta($post_id, 'order_code', sanitize_text_field($_POST['order_code']));
+    }
+    if (isset($_POST['customer_name'])) {
+        update_post_meta($post_id, 'customer_name', sanitize_text_field($_POST['customer_name']));
+    }
+    if (isset($_POST['customer_phone'])) {
+        update_post_meta($post_id, 'customer_phone', sanitize_text_field($_POST['customer_phone']));
+    }
+    if (isset($_POST['order_status'])) {
+        update_post_meta($post_id, 'order_status', sanitize_text_field($_POST['order_status']));
+    }
+    if (isset($_POST['order_products'])) {
+        update_post_meta($post_id, 'order_products', sanitize_text_field($_POST['order_products']));
+    }
+}
+add_action('save_post', 'shopcar_save_order_meta');
+
+// Register custom post type for orders
+function shopcar_register_order_post_type() {
+    $labels = array(
+        'name' => 'Orders',
+        'singular_name' => 'Order',
+        'menu_name' => 'Orders',
+        'name_admin_bar' => 'Order',
+        'add_new' => 'Add New',
+        'add_new_item' => 'Add New Order',
+        'new_item' => 'New Order',
+        'edit_item' => 'Edit Order',
+        'view_item' => 'View Order',
+        'all_items' => 'All Orders',
+        'search_items' => 'Search Orders',
+        'not_found' => 'No orders found.',
+        'not_found_in_trash' => 'No orders found in Trash.'
+    );
+
+    $args = array(
+        'labels' => $labels,
+        'public' => true,
+        'publicly_queryable' => true,
+        'show_ui' => true,
+        'show_in_menu' => true,
+        'menu_icon' => 'dashicons-cart',
+        'query_var' => true,
+        'rewrite' => array('slug' => 'order'),
+        'capability_type' => 'post',
+        'has_archive' => false,
+        'hierarchical' => false,
+        'menu_position' => 5,
+        'supports' => array('title', 'editor', 'custom-fields'),
+    );
+    register_post_type('shopcar_order', $args);
+}
+add_action('init', 'shopcar_register_order_post_type');

@@ -148,3 +148,4 @@ Mở file `footer.php` hoặc template muốn thêm, thêm:
 - Muốn test lại, xóa meta `_new_product_notified` của sản phẩm
 
 
+
