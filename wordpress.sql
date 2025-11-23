@@ -26,6 +26,7 @@ SET time_zone = "+00:00";
 --
 -- Cấu trúc bảng cho bảng `wp_actionscheduler_actions`
 --
+DROP TABLE IF EXISTS `wp_actionscheduler_actions`;
 
 CREATE TABLE `wp_actionscheduler_actions` (
   `action_id` bigint(20) UNSIGNED NOT NULL,
@@ -244,6 +245,8 @@ INSERT INTO `wp_actionscheduler_actions` (`action_id`, `hook`, `status`, `schedu
 --
 -- Cấu trúc bảng cho bảng `wp_actionscheduler_claims`
 --
+DROP TABLE IF EXISTS `wp_actionscheduler_claims`;
+
 
 CREATE TABLE `wp_actionscheduler_claims` (
   `claim_id` bigint(20) UNSIGNED NOT NULL,
@@ -255,6 +258,7 @@ CREATE TABLE `wp_actionscheduler_claims` (
 --
 -- Cấu trúc bảng cho bảng `wp_actionscheduler_groups`
 --
+DROP TABLE IF EXISTS `wp_actionscheduler_groups`;
 
 CREATE TABLE `wp_actionscheduler_groups` (
   `group_id` bigint(20) UNSIGNED NOT NULL,
@@ -280,6 +284,7 @@ INSERT INTO `wp_actionscheduler_groups` (`group_id`, `slug`) VALUES
 --
 -- Cấu trúc bảng cho bảng `wp_actionscheduler_logs`
 --
+DROP TABLE IF EXISTS `wp_actionscheduler_logs`;
 
 CREATE TABLE `wp_actionscheduler_logs` (
   `log_id` bigint(20) UNSIGNED NOT NULL,
@@ -840,6 +845,7 @@ INSERT INTO `wp_actionscheduler_logs` (`log_id`, `action_id`, `message`, `log_da
 --
 -- Cấu trúc bảng cho bảng `wp_commentmeta`
 --
+DROP TABLE IF EXISTS `wp_commentmeta`;
 
 CREATE TABLE `wp_commentmeta` (
   `meta_id` bigint(20) UNSIGNED NOT NULL,
@@ -901,6 +907,7 @@ INSERT INTO `wp_comments` (`comment_ID`, `comment_post_ID`, `comment_author`, `c
 --
 -- Cấu trúc bảng cho bảng `wp_links`
 --
+DROP TABLE IF EXISTS `wp_links`;
 
 CREATE TABLE `wp_links` (
   `link_id` bigint(20) UNSIGNED NOT NULL,
