@@ -546,6 +546,8 @@ add_filter('wp_mail_content_type', function () {
 });
 // End bui-tham-ky/4-forget-password
 
+
+
 // Tách riêng login frontend và wp-admin
 // Khi login ở wp-admin, đánh dấu là login từ admin
 add_action('wp_login', function ($user_login, $user) {
