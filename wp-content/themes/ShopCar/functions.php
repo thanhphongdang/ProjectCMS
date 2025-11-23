@@ -1391,5 +1391,143 @@ function shopcar_email_subscriptions_admin_page()
             </tbody>
         </table>
     </div>
+    
 <?php
 }
+
+
+/* ============================================
+ * 🔍 HÀM SEARCH SẢN PHẨM THEO TÊN XE – HÃNG – GIÁ
+ * ============================================ */
+function shopcar_custom_product_search( $query ) {
+
+    // Chỉ chạy ở trang search frontend
+    if ( ! is_admin() && $query->is_main_query() && $query->is_search() ) {
+
+        $keyword = $query->get('s'); // từ khóa người dùng nhập
+        if ( empty($keyword) ) return;
+
+        // Reset kết quả search mặc định của WordPress
+        $query->set('post_type', 'product');
+
+        // === TÌM THEO GIÁ (Nếu nhập số) ===
+        if ( is_numeric($keyword) ) {
+
+            $query->set('meta_query', [
+                [
+                    'key'     => '_price',
+                    'value'   => (int)$keyword,
+                    'compare' => '<=',
+                    'type'    => 'NUMERIC'
+                ]
+            ]);
+
+            return;
+        }
+
+        // === TÌM THEO TÊN XE HOẶC HÃNG (category) ===
+        $query->set('tax_query', [
+            'relation' => 'OR',
+            [
+                'taxonomy' => 'product_cat',
+                'field'    => 'name',
+                'terms'    => $keyword,
+                'operator' => 'LIKE',
+            ]
+        ]);
+    }
+}
+
+add_action( 'pre_get_posts', 'shopcar_custom_product_search' );
+
+
+/* ============================================================
+ * 📝 hàm comment item – ShopCar
+ * Cho phép bình luận sản phẩm như bài viết bình thường
+ * ============================================================ */
+
+// 1) Bật comment cho sản phẩm WooCommerce
+add_filter('woocommerce_product_tabs', function($tabs) {
+    unset($tabs['reviews']); // bỏ tab review mặc định
+    return $tabs;
+});
+
+add_action('init', function() {
+    add_post_type_support('product', 'comments');
+});
+
+// 2) Xử lý gửi bình luận (cả khách và user)
+add_action('wp_ajax_shopcar_add_comment', 'shopcar_add_comment');
+add_action('wp_ajax_nopriv_shopcar_add_comment', 'shopcar_add_comment');
+
+function shopcar_add_comment() {
+
+    $product_id = intval($_POST['product_id']);
+    $author     = sanitize_text_field($_POST['author']);
+    $email      = sanitize_email($_POST['email']);
+    $content    = sanitize_textarea_field($_POST['content']);
+
+    if (!$product_id || empty($content)) {
+        wp_send_json_error("Bạn phải nhập nội dung bình luận.");
+    }
+
+    // Nếu user đã đăng nhập → tự lấy tên + email
+    if (is_user_logged_in()) {
+        $user      = wp_get_current_user();
+        $author    = $user->display_name;
+        $email     = $user->user_email;
+        $user_id   = $user->ID;
+    } else {
+        $user_id = 0;
+    }
+
+    // Lưu vào wp_comments
+    $comment_id = wp_insert_comment([
+        'comment_post_ID' => $product_id,
+        'comment_author'  => $author,
+        'comment_author_email' => $email,
+        'comment_content' => $content,
+        'user_id'         => $user_id,
+        'comment_approved' => 1,
+        'comment_date'     => current_time('mysql'),
+        'comment_date_gmt' => current_time('mysql', 1),
+    ]);
+
+    if ($comment_id) {
+        wp_send_json_success("Đã gửi bình luận!");
+    }
+
+    wp_send_json_error("Gửi bình luận thất bại!");
+}
+
+
+// 3) Hàm xóa bình luận (chỉ người tạo hoặc admin)
+add_action('wp_ajax_shopcar_delete_comment', 'shopcar_delete_comment');
+add_action('wp_ajax_nopriv_shopcar_delete_comment', 'shopcar_delete_comment');
+
+function shopcar_delete_comment() {
+
+    $comment_id = intval($_POST['comment_id']);
+    $comment = get_comment($comment_id);
+
+    if (!$comment) wp_send_json_error("Không tìm thấy bình luận!");
+
+    // Người tạo bình luận hoặc admin mới được xóa
+    if (
+        (is_user_logged_in() && get_current_user_id() == $comment->user_id)
+        || current_user_can('administrator')
+    ) {
+        wp_delete_comment($comment_id, true);
+        wp_send_json_success("Đã xóa bình luận!");
+    }
+
+    wp_send_json_error("Bạn không có quyền xóa bình luận này!");
+}
+
+
+// 4) Gửi AJAX URL xuống frontend
+add_action('wp_enqueue_scripts', function() {
+    wp_localize_script('shopcar-main', 'ShopCarAjax', [
+        'ajax_url' => admin_url('admin-ajax.php'),
+    ]);
+});
