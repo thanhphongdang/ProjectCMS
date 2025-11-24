@@ -1,6 +1,6 @@
 <?php
 /**
- * Template Name: Custom Forgot Password
+ * Template Name: User Reset Password Page
  */
 defined('ABSPATH') || exit;
 get_header();

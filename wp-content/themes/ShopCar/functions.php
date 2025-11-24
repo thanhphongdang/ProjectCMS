@@ -541,9 +541,11 @@ add_action('init', function () {
 // End bui-tham-ky/3-change-password
 
 // bui-tham-ky/4-forget-password
+// Kích hoạt gửi email dạng HTML
 add_filter('wp_mail_content_type', function () {
     return "text/html";
 });
+
 // End bui-tham-ky/4-forget-password
 
 // bui-tham-ky/5-wishlist
@@ -1391,7 +1393,7 @@ function shopcar_email_subscriptions_admin_page()
             </tbody>
         </table>
     </div>
-    
+
 <?php
 }
 
@@ -1399,19 +1401,20 @@ function shopcar_email_subscriptions_admin_page()
 /* ============================================
  * 🔍 HÀM SEARCH SẢN PHẨM THEO TÊN XE – HÃNG – GIÁ
  * ============================================ */
-function shopcar_custom_product_search( $query ) {
+function shopcar_custom_product_search($query)
+{
 
     // Chỉ chạy ở trang search frontend
-    if ( ! is_admin() && $query->is_main_query() && $query->is_search() ) {
+    if (! is_admin() && $query->is_main_query() && $query->is_search()) {
 
         $keyword = $query->get('s'); // từ khóa người dùng nhập
-        if ( empty($keyword) ) return;
+        if (empty($keyword)) return;
 
         // Reset kết quả search mặc định của WordPress
         $query->set('post_type', 'product');
 
         // === TÌM THEO GIÁ (Nếu nhập số) ===
-        if ( is_numeric($keyword) ) {
+        if (is_numeric($keyword)) {
 
             $query->set('meta_query', [
                 [
@@ -1438,7 +1441,7 @@ function shopcar_custom_product_search( $query ) {
     }
 }
 
-add_action( 'pre_get_posts', 'shopcar_custom_product_search' );
+add_action('pre_get_posts', 'shopcar_custom_product_search');
 
 
 /* ============================================================
@@ -1447,12 +1450,12 @@ add_action( 'pre_get_posts', 'shopcar_custom_product_search' );
  * ============================================================ */
 
 // 1) Bật comment cho sản phẩm WooCommerce
-add_filter('woocommerce_product_tabs', function($tabs) {
+add_filter('woocommerce_product_tabs', function ($tabs) {
     unset($tabs['reviews']); // bỏ tab review mặc định
     return $tabs;
 });
 
-add_action('init', function() {
+add_action('init', function () {
     add_post_type_support('product', 'comments');
 });
 
@@ -1460,7 +1463,8 @@ add_action('init', function() {
 add_action('wp_ajax_shopcar_add_comment', 'shopcar_add_comment');
 add_action('wp_ajax_nopriv_shopcar_add_comment', 'shopcar_add_comment');
 
-function shopcar_add_comment() {
+function shopcar_add_comment()
+{
 
     $product_id = intval($_POST['product_id']);
     $author     = sanitize_text_field($_POST['author']);
@@ -1505,7 +1509,8 @@ function shopcar_add_comment() {
 add_action('wp_ajax_shopcar_delete_comment', 'shopcar_delete_comment');
 add_action('wp_ajax_nopriv_shopcar_delete_comment', 'shopcar_delete_comment');
 
-function shopcar_delete_comment() {
+function shopcar_delete_comment()
+{
 
     $comment_id = intval($_POST['comment_id']);
     $comment = get_comment($comment_id);
@@ -1526,7 +1531,7 @@ function shopcar_delete_comment() {
 
 
 // 4) Gửi AJAX URL xuống frontend
-add_action('wp_enqueue_scripts', function() {
+add_action('wp_enqueue_scripts', function () {
     wp_localize_script('shopcar-main', 'ShopCarAjax', [
         'ajax_url' => admin_url('admin-ajax.php'),
     ]);
@@ -1598,13 +1603,16 @@ add_action('init', function () {
  * ============================================================ */
 add_action('plugins_loaded', 'shopcar_load_fake_gateway');
 
-function shopcar_load_fake_gateway() {
+function shopcar_load_fake_gateway()
+{
 
     if (!class_exists('WC_Payment_Gateway')) return;
 
-    class WC_Gateway_Fake extends WC_Payment_Gateway {
+    class WC_Gateway_Fake extends WC_Payment_Gateway
+    {
 
-        public function __construct() {
+        public function __construct()
+        {
             $this->id                 = 'fake_payment';
             $this->method_title       = 'Thanh toán khi đặt xe (Fake)';
             $this->method_description = 'Phương thức thanh toán ảo dành cho website bán xe.';
@@ -1613,7 +1621,8 @@ function shopcar_load_fake_gateway() {
             $this->has_fields         = false;
         }
 
-        public function process_payment($order_id) {
+        public function process_payment($order_id)
+        {
 
             $order = wc_get_order($order_id);
 
@@ -1632,18 +1641,19 @@ function shopcar_load_fake_gateway() {
     }
 }
 
-add_filter('woocommerce_payment_gateways', function($methods) {
+add_filter('woocommerce_payment_gateways', function ($methods) {
     $methods[] = 'WC_Gateway_Fake';
     return $methods;
 });
 
-add_filter('woocommerce_cod_process_payment_order_status', function($status, $order) {
+add_filter('woocommerce_cod_process_payment_order_status', function ($status, $order) {
     return 'pending'; // ép COD luôn ở trạng thái Pending
 }, 10, 2);
 
-function order_tracking_form() {
+function order_tracking_form()
+{
     ob_start();
-    ?>
+?>
 
     <form method="post">
         <label>Mã đơn hàng:</label>
@@ -1679,148 +1689,149 @@ function order_tracking_form() {
     return ob_get_clean();
 }
 add_shortcode('order_tracking', 'order_tracking_form');
-function shopee_coupon_box() {
+function shopee_coupon_box()
+{
     ob_start();
     ?>
 
-<style>
-.shopee-voucher-box {
-    background: #fff;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    margin: 25px 0;
-}
+    <style>
+        .shopee-voucher-box {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin: 25px 0;
+        }
 
-.shopee-voucher-title {
-    font-size: 20px;
-    font-weight: 600;
-    color: #ee4d2d;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+        .shopee-voucher-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #ee4d2d;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-.shopee-input-voucher {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    margin-top: 15px;
-}
+        .shopee-input-voucher {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
 
-.shopee-apply-btn {
-    background: #ee4d2d;
-    color: #fff;
-    border: none;
-    padding: 12px 18px;
-    border-radius: 8px;
-    margin-top: 10px;
-    font-size: 16px;
-    cursor: pointer;
-    width: 100%;
-}
+        .shopee-apply-btn {
+            background: #ee4d2d;
+            color: #fff;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
 
-.shopee-apply-btn:hover {
-    background: #d84325;
-}
+        .shopee-apply-btn:hover {
+            background: #d84325;
+        }
 
-.shopee-result-box {
-    margin-top: 15px;
-    padding: 12px;
-    background: #fff6f5;
-    border-left: 4px solid #ee4d2d;
-    border-radius: 8px;
-}
+        .shopee-result-box {
+            margin-top: 15px;
+            padding: 12px;
+            background: #fff6f5;
+            border-left: 4px solid #ee4d2d;
+            border-radius: 8px;
+        }
 
-.shopee-voucher-list {
-    margin-top: 20px;
-}
+        .shopee-voucher-list {
+            margin-top: 20px;
+        }
 
-.shopee-voucher-item {
-    display: flex;
-    background: #fff7f5;
-    border-left: 4px solid #ee4d2d;
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    justify-content: space-between;
-    align-items: center;
-}
+        .shopee-voucher-item {
+            display: flex;
+            background: #fff7f5;
+            border-left: 4px solid #ee4d2d;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-.shopee-voucher-item .left {
-    font-weight: 600;
-}
+        .shopee-voucher-item .left {
+            font-weight: 600;
+        }
 
-.shopee-voucher-item .right button {
-    background: #ee4d2d;
-    border: none;
-    color: #fff;
-    padding: 6px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-}
-</style>
+        .shopee-voucher-item .right button {
+            background: #ee4d2d;
+            border: none;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
 
-<div class="shopee-voucher-box">
-    <div class="shopee-voucher-title">🎁 Mã giảm giá</div>
+    <div class="shopee-voucher-box">
+        <div class="shopee-voucher-title">🎁 Mã giảm giá</div>
 
-    <form method="post">
-        <input type="text" name="voucher" class="shopee-input-voucher" placeholder="Nhập mã giảm giá...">
-        <button class="shopee-apply-btn">Áp dụng</button>
-    </form>
+        <form method="post">
+            <input type="text" name="voucher" class="shopee-input-voucher" placeholder="Nhập mã giảm giá...">
+            <button class="shopee-apply-btn">Áp dụng</button>
+        </form>
 
-    <?php
-    if (!empty($_POST['voucher'])) {
-        $code = sanitize_text_field($_POST['voucher']);
+        <?php
+        if (!empty($_POST['voucher'])) {
+            $code = sanitize_text_field($_POST['voucher']);
 
-        // Lấy coupon WooCommerce
-        $coupon = new WC_Coupon($code);
+            // Lấy coupon WooCommerce
+            $coupon = new WC_Coupon($code);
 
-        if ($coupon->get_id()) {
-            $discount = $coupon->get_amount();
-            $type = $coupon->get_discount_type();
+            if ($coupon->get_id()) {
+                $discount = $coupon->get_amount();
+                $type = $coupon->get_discount_type();
 
-            $type_label = ($type === 'percent') ? "% giảm" : "₫ giảm";
+                $type_label = ($type === 'percent') ? "% giảm" : "₫ giảm";
 
-            echo "<div class='shopee-result-box'>
+                echo "<div class='shopee-result-box'>
                     🎉 Mã hợp lệ: <strong>$code</strong><br>
                     Giảm: <strong>$discount$type_label</strong>
                   </div>";
-        } else {
-            echo "<div class='shopee-result-box' style='border-left-color:red;'>
+            } else {
+                echo "<div class='shopee-result-box' style='border-left-color:red;'>
                     ❌ Mã không hợp lệ hoặc đã hết hạn!
                   </div>";
+            }
         }
-    }
-    ?>
+        ?>
 
-    <!-- Gợi ý voucher -->
-    <div class="shopee-voucher-list">
-        <h4>Voucher dành cho bạn:</h4>
+        <!-- Gợi ý voucher -->
+        <div class="shopee-voucher-list">
+            <h4>Voucher dành cho bạn:</h4>
 
-        <div class="shopee-voucher-item">
-            <div class="left">GIAM10K</div>
-            <div class="right">
-                <button onclick="copyVoucher('GIAM10K')">Copy</button>
+            <div class="shopee-voucher-item">
+                <div class="left">GIAM10K</div>
+                <div class="right">
+                    <button onclick="copyVoucher('GIAM10K')">Copy</button>
+                </div>
             </div>
-        </div>
 
-        <div class="shopee-voucher-item">
-            <div class="left">SALE20K</div>
-            <div class="right">
-                <button onclick="copyVoucher('SALE20K')">Copy</button>
+            <div class="shopee-voucher-item">
+                <div class="left">SALE20K</div>
+                <div class="right">
+                    <button onclick="copyVoucher('SALE20K')">Copy</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<script>
-function copyVoucher(code) {
-    navigator.clipboard.writeText(code);
-    alert("Đã copy mã: " + code);
-}
-</script>
+    <script>
+        function copyVoucher(code) {
+            navigator.clipboard.writeText(code);
+            alert("Đã copy mã: " + code);
+        }
+    </script>
 
 <?php
     return ob_get_clean();
@@ -1829,8 +1840,9 @@ add_shortcode('shopee-voucher', 'shopee_coupon_box');
 // Hiển thị giao diện Voucher kiểu Shopee trong Order Details
 // Hiển thị form voucher trong trang order
 add_action('woocommerce_order_details_after_order_table', 'order_voucher_form');
-function order_voucher_form($order) {
-    ?>
+function order_voucher_form($order)
+{
+?>
     <div id="voucher-box" style="margin-top:20px;padding:15px;border:1px solid #ddd;border-radius:10px;">
         <h3>🎁 Nhập mã giảm giá</h3>
         <input type="text" id="voucher_code" placeholder="Nhập mã voucher...">
@@ -1839,31 +1851,31 @@ function order_voucher_form($order) {
     </div>
 
     <script>
-    jQuery(document).ready(function($){
-        $('#apply_voucher').on('click', function(){
-            var code = $('#voucher_code').val();
-            var order_id = <?php echo $order->get_id(); ?>;
+        jQuery(document).ready(function($) {
+            $('#apply_voucher').on('click', function() {
+                var code = $('#voucher_code').val();
+                var order_id = <?php echo $order->get_id(); ?>;
 
-            $.post('<?php echo admin_url("admin-ajax.php"); ?>',
-                {
+                $.post('<?php echo admin_url("admin-ajax.php"); ?>', {
                     action: 'apply_order_voucher',
                     code: code,
                     order_id: order_id,
-                }, function(response){
+                }, function(response) {
                     $('#voucher_result').html(response);
                     location.reload(); // reload để cập nhật tổng tiền
                 });
+            });
         });
-    });
     </script>
-    <?php
+<?php
 }
 
 // AJAX xử lý voucher
 add_action('wp_ajax_apply_order_voucher', 'apply_order_voucher');
 add_action('wp_ajax_nopriv_apply_order_voucher', 'apply_order_voucher');
 
-function apply_order_voucher() {
+function apply_order_voucher()
+{
     if (!isset($_POST['code']) || !isset($_POST['order_id'])) wp_die();
 
     $order_id = intval($_POST['order_id']);
@@ -1882,23 +1894,21 @@ function apply_order_voucher() {
     $amount = $coupon->get_amount();
     $type   = $coupon->get_discount_type();
 
-    if ($type=='percent') $discount = ($order->get_subtotal() * $amount)/100;
+    if ($type == 'percent') $discount = ($order->get_subtotal() * $amount) / 100;
     else $discount = floatval($amount);
 
     $discount = min($discount, $order->get_total());
 
     // Thêm fee âm để trừ tiền
     $item = new WC_Order_Item_Fee();
-    $item->set_name('Mã giảm giá: '.$code);
+    $item->set_name('Mã giảm giá: ' . $code);
     $item->set_total(-$discount);
     $order->add_item($item);
 
     $order->calculate_totals();
-    $order->update_meta_data('voucher_applied',1);
+    $order->update_meta_data('voucher_applied', 1);
     $order->save();
 
-    echo '🎉 Mã hợp lệ! Giảm: '.$discount;
+    echo '🎉 Mã hợp lệ! Giảm: ' . $discount;
     wp_die();
 }
-
-
