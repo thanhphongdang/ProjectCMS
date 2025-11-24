@@ -187,7 +187,7 @@ get_header();
                 <div class="col-lg-3 col-md-6">
                     <div class="axil-team-member">
                         <div class="thumbnail">
-                            <img src="<?php echo get_template_directory_uri(); ?>/assets/images/team/team-03.png">
+                            <img src="<?php echo get_template_directory_uri(); ?>/assets/images/team/team-04.png">
                         </div>
                         <div class="team-content">
                             <span class="subtitle">Founder</span>
