@@ -21,12 +21,2892 @@ add_action('after_setup_theme', function () {
     add_theme_support('post-thumbnails');
     add_theme_support('html5', ['search-form', 'comment-form', 'comment-list', 'gallery', 'caption', 'style', 'script']);
     add_theme_support('woocommerce');
+    add_theme_support('custom-logo', [
+        'height'      => 48,
+        'width'       => 200,
+        'flex-height' => true,
+        'flex-width'  => true,
+    ]);
 
     register_nav_menus([
         'primary' => __('Primary Menu', 'ShopCar'),
         'footer' => __('Footer Menu', 'ShopCar'),
     ]);
 });
+
+// === CUSTOM MENU WALKER ===
+class ShopCar_Walker_Nav_Menu extends Walker_Nav_Menu {
+    
+    // Bắt đầu một menu item
+    function start_lvl(&$output, $depth = 0, $args = null) {
+        $indent = str_repeat("\t", $depth);
+        $output .= "\n$indent<ul class=\"sub-menu\">\n";
+    }
+    
+    // Kết thúc một menu item
+    function end_lvl(&$output, $depth = 0, $args = null) {
+        $indent = str_repeat("\t", $depth);
+        $output .= "$indent</ul>\n";
+    }
+    
+    // Bắt đầu một element
+    function start_el(&$output, $item, $depth = 0, $args = null, $id = 0) {
+        $indent = ($depth) ? str_repeat("\t", $depth) : '';
+        
+        $classes = empty($item->classes) ? array() : (array) $item->classes;
+        $classes[] = 'menu-item-' . $item->ID;
+        
+        // Thêm class cho menu item có submenu
+        $has_children = in_array('menu-item-has-children', $classes);
+        if ($has_children) {
+            $classes[] = 'has-submenu';
+        }
+        
+        $class_names = join(' ', apply_filters('nav_menu_css_class', array_filter($classes), $item, $args));
+        $class_names = $class_names ? ' class="' . esc_attr($class_names) . '"' : '';
+        
+        $id = apply_filters('nav_menu_item_id', 'menu-item-'. $item->ID, $item, $args);
+        $id = $id ? ' id="' . esc_attr($id) . '"' : '';
+        
+        $output .= $indent . '<li' . $id . $class_names .'>';
+        
+        $attributes = ! empty($item->attr_title) ? ' title="'  . esc_attr($item->attr_title) .'"' : '';
+        $attributes .= ! empty($item->target)     ? ' target="' . esc_attr($item->target     ) .'"' : '';
+        $attributes .= ! empty($item->xfn)        ? ' rel="'    . esc_attr($item->xfn        ) .'"' : '';
+        $attributes .= ! empty($item->url)       ? ' href="'   . esc_attr($item->url        ) .'"' : '';
+        
+        $item_output = isset($args->before) ? $args->before : '';
+        $item_output .= '<a' . $attributes .'>';
+        $item_output .= (isset($args->link_before) ? $args->link_before : '') . apply_filters('the_title', $item->title, $item->ID) . (isset($args->link_after) ? $args->link_after : '');
+        
+        // Thêm icon dropdown nếu có submenu
+        if ($has_children && $depth === 0) {
+            $item_output .= ' <i class="fas fa-chevron-down"></i>';
+        }
+        
+        $item_output .= '</a>';
+        $item_output .= isset($args->after) ? $args->after : '';
+        
+        $output .= apply_filters('walker_nav_menu_start_el', $item_output, $item, $depth, $args);
+    }
+    
+    // Kết thúc một element
+    function end_el(&$output, $item, $depth = 0, $args = null) {
+        $output .= "</li>\n";
+    }
+}
+
+// === HEADER CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_header_customizer_settings');
+function shopcar_header_customizer_settings($wp_customize) {
+    
+    // === HEADER SECTION ===
+    $wp_customize->add_section('shopcar_header_settings', [
+        'title'    => __('Header Settings', 'ShopCar'),
+        'priority' => 30,
+    ]);
+
+    // Top Bar Enable
+    $wp_customize->add_setting('header_top_bar_enable', [
+        'default'           => true,
+        'sanitize_callback' => 'wp_validate_boolean',
+        'transport'         => 'refresh',
+    ]);
+    $wp_customize->add_control('header_top_bar_enable', [
+        'label'    => __('Hiển thị Top Bar', 'ShopCar'),
+        'section'  => 'shopcar_header_settings',
+        'type'     => 'checkbox',
+    ]);
+
+    // Top Bar Phone
+    $wp_customize->add_setting('header_top_bar_phone', [
+        'default'           => '1900 123 456',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('header_top_bar_phone', [
+        'label'    => __('Số điện thoại Hotline', 'ShopCar'),
+        'section'  => 'shopcar_header_settings',
+        'type'     => 'text',
+    ]);
+
+    // Top Bar Email
+    $wp_customize->add_setting('header_top_bar_email', [
+        'default'           => 'info@shopcar.com',
+        'sanitize_callback' => 'sanitize_email',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('header_top_bar_email', [
+        'label'    => __('Email liên hệ', 'ShopCar'),
+        'section'  => 'shopcar_header_settings',
+        'type'     => 'email',
+    ]);
+
+    // Top Bar Background Color
+    $wp_customize->add_setting('header_top_bar_bg', [
+        'default'           => '#1a1a1a',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'header_top_bar_bg', [
+        'label'    => __('Màu nền Top Bar', 'ShopCar'),
+        'section'  => 'shopcar_header_settings',
+    ]));
+
+    // Header Background Color
+    $wp_customize->add_setting('header_bg_color', [
+        'default'           => '#ffffff',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'header_bg_color', [
+        'label'    => __('Màu nền Header', 'ShopCar'),
+        'section'  => 'shopcar_header_settings',
+    ]));
+
+    // Sticky Header Enable
+    $wp_customize->add_setting('header_sticky_enable', [
+        'default'           => true,
+        'sanitize_callback' => 'wp_validate_boolean',
+        'transport'         => 'refresh',
+    ]);
+    $wp_customize->add_control('header_sticky_enable', [
+        'label'    => __('Bật Sticky Header', 'ShopCar'),
+        'section'  => 'shopcar_header_settings',
+        'type'     => 'checkbox',
+    ]);
+
+    // Top Bar Text Color
+    $wp_customize->add_setting('header_top_bar_text_color', [
+        'default'           => '#ffffff',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'header_top_bar_text_color', [
+        'label'    => __('Màu chữ Top Bar', 'ShopCar'),
+        'section'  => 'shopcar_header_settings',
+    ]));
+
+    // === TOP BAR RIGHT LINKS ===
+    $wp_customize->add_setting('header_top_bar_show_wishlist', [
+        'default'           => true,
+        'sanitize_callback' => 'wp_validate_boolean',
+        'transport'         => 'refresh',
+    ]);
+    $wp_customize->add_control('header_top_bar_show_wishlist', [
+        'label'    => __('Hiển thị link Wishlist trong Top Bar', 'ShopCar'),
+        'section'  => 'shopcar_header_settings',
+        'type'     => 'checkbox',
+    ]);
+
+    $wp_customize->add_setting('header_top_bar_show_order_tracking', [
+        'default'           => true,
+        'sanitize_callback' => 'wp_validate_boolean',
+        'transport'         => 'refresh',
+    ]);
+    $wp_customize->add_control('header_top_bar_show_order_tracking', [
+        'label'    => __('Hiển thị link Tra cứu đơn hàng trong Top Bar', 'ShopCar'),
+        'section'  => 'shopcar_header_settings',
+        'type'     => 'checkbox',
+    ]);
+
+    // === MENU SETTINGS ===
+    $wp_customize->add_setting('header_menu_text_color', [
+        'default'           => '#222222',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'header_menu_text_color', [
+        'label'    => __('Màu chữ Menu', 'ShopCar'),
+        'section'  => 'shopcar_header_settings',
+    ]));
+
+    $wp_customize->add_setting('header_menu_hover_color', [
+        'default'           => '#000000',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'header_menu_hover_color', [
+        'label'    => __('Màu chữ Menu khi hover', 'ShopCar'),
+        'section'  => 'shopcar_header_settings',
+    ]));
+
+    $wp_customize->add_setting('header_menu_hover_bg', [
+        'default'           => '#f5f5f5',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'header_menu_hover_bg', [
+        'label'    => __('Màu nền Menu khi hover', 'ShopCar'),
+        'section'  => 'shopcar_header_settings',
+    ]));
+
+    $wp_customize->add_setting('header_menu_font_size', [
+        'default'           => '15',
+        'sanitize_callback' => 'absint',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('header_menu_font_size', [
+        'label'    => __('Kích thước chữ Menu (px)', 'ShopCar'),
+        'section'  => 'shopcar_header_settings',
+        'type'     => 'number',
+        'input_attrs' => [
+            'min'  => 12,
+            'max'  => 24,
+            'step' => 1,
+        ],
+    ]);
+
+    // === SEARCH SETTINGS ===
+    $wp_customize->add_setting('header_search_placeholder', [
+        'default'           => 'Tìm xe theo tên, hãng hoặc giá...',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('header_search_placeholder', [
+        'label'    => __('Placeholder Search Box', 'ShopCar'),
+        'section'  => 'shopcar_header_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('header_search_button_color', [
+        'default'           => '#000000',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'header_search_button_color', [
+        'label'    => __('Màu nút Search', 'ShopCar'),
+        'section'  => 'shopcar_header_settings',
+    ]));
+
+    // === CART SETTINGS ===
+    $wp_customize->add_setting('header_cart_badge_color', [
+        'default'           => '#ff497c',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'header_cart_badge_color', [
+        'label'    => __('Màu Badge Cart', 'ShopCar'),
+        'section'  => 'shopcar_header_settings',
+    ]));
+
+    // === ACTION ICONS COLOR ===
+    $wp_customize->add_setting('header_action_icons_color', [
+        'default'           => '#222222',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'header_action_icons_color', [
+        'label'    => __('Màu Icon (Search, Account, Cart)', 'ShopCar'),
+        'section'  => 'shopcar_header_settings',
+    ]));
+
+    // === HEADER PADDING ===
+    $wp_customize->add_setting('header_padding_top', [
+        'default'           => '16',
+        'sanitize_callback' => 'absint',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('header_padding_top', [
+        'label'    => __('Padding Top Header (px)', 'ShopCar'),
+        'section'  => 'shopcar_header_settings',
+        'type'     => 'number',
+        'input_attrs' => [
+            'min'  => 0,
+            'max'  => 50,
+            'step' => 1,
+        ],
+    ]);
+
+    $wp_customize->add_setting('header_padding_bottom', [
+        'default'           => '16',
+        'sanitize_callback' => 'absint',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('header_padding_bottom', [
+        'label'    => __('Padding Bottom Header (px)', 'ShopCar'),
+        'section'  => 'shopcar_header_settings',
+        'type'     => 'number',
+        'input_attrs' => [
+            'min'  => 0,
+            'max'  => 50,
+            'step' => 1,
+        ],
+    ]);
+
+    // === LOGO HEIGHT ===
+    $wp_customize->add_setting('header_logo_height', [
+        'default'           => '48',
+        'sanitize_callback' => 'absint',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('header_logo_height', [
+        'label'    => __('Chiều cao Logo (px)', 'ShopCar'),
+        'section'  => 'shopcar_header_settings',
+        'type'     => 'number',
+        'input_attrs' => [
+            'min'  => 20,
+            'max'  => 100,
+            'step' => 1,
+        ],
+    ]);
+
+    // Logo Upload (sử dụng custom-logo support)
+    // Logo đã được hỗ trợ tự động qua add_theme_support('custom-logo')
+}
+
+// === FOOTER CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_footer_customizer_settings');
+function shopcar_footer_customizer_settings($wp_customize) {
+    
+    // === FOOTER SECTION ===
+    $wp_customize->add_section('shopcar_footer_settings', [
+        'title'    => __('Footer Settings', 'ShopCar'),
+        'priority' => 40,
+    ]);
+
+    // Footer Background Color
+    $wp_customize->add_setting('footer_bg_color', [
+        'default'           => '#1a1a1a',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'footer_bg_color', [
+        'label'    => __('Màu nền Footer', 'ShopCar'),
+        'section'  => 'shopcar_footer_settings',
+    ]));
+
+    // Footer Text Color
+    $wp_customize->add_setting('footer_text_color', [
+        'default'           => '#ffffff',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'footer_text_color', [
+        'label'    => __('Màu chữ Footer', 'ShopCar'),
+        'section'  => 'shopcar_footer_settings',
+    ]));
+
+    // Footer Address
+    $wp_customize->add_setting('footer_address', [
+        'default'           => '685 Market Street, Las Vegas, LA 95820, United States.',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('footer_address', [
+        'label'    => __('Địa chỉ', 'ShopCar'),
+        'section'  => 'shopcar_footer_settings',
+        'type'     => 'textarea',
+    ]);
+
+    // Footer Email
+    $wp_customize->add_setting('footer_email', [
+        'default'           => 'example@domain.com',
+        'sanitize_callback' => 'sanitize_email',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('footer_email', [
+        'label'    => __('Email liên hệ', 'ShopCar'),
+        'section'  => 'shopcar_footer_settings',
+        'type'     => 'email',
+    ]);
+
+    // Footer Phone
+    $wp_customize->add_setting('footer_phone', [
+        'default'           => '(+01) 850-315-5862',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('footer_phone', [
+        'label'    => __('Số điện thoại', 'ShopCar'),
+        'section'  => 'shopcar_footer_settings',
+        'type'     => 'text',
+    ]);
+
+    // Copyright Text
+    $wp_customize->add_setting('footer_copyright', [
+        'default'           => '© ' . date('Y') . '. All rights reserved by Axilthemes.',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('footer_copyright', [
+        'label'    => __('Copyright Text', 'ShopCar'),
+        'section'  => 'shopcar_footer_settings',
+        'type'     => 'text',
+    ]);
+
+    // Social Media Links
+    $social_networks = ['facebook', 'instagram', 'twitter', 'linkedin', 'discord'];
+    foreach ($social_networks as $network) {
+        $wp_customize->add_setting('footer_social_' . $network, [
+            'default'           => '#',
+            'sanitize_callback' => 'esc_url_raw',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('footer_social_' . $network, [
+            'label'    => sprintf(__('Link %s', 'ShopCar'), ucfirst($network)),
+            'section'  => 'shopcar_footer_settings',
+            'type'     => 'url',
+        ]);
+    }
+}
+
+// === HOMEPAGE CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_homepage_customizer_settings');
+function shopcar_homepage_customizer_settings($wp_customize) {
+    
+    // === HOMEPAGE SECTION ===
+    $wp_customize->add_section('shopcar_homepage_settings', [
+        'title'    => __('Homepage Settings', 'ShopCar'),
+        'priority' => 50,
+    ]);
+
+    // Slider Title
+    $wp_customize->add_setting('homepage_slider_title', [
+        'default'           => 'Discover Premium Cars',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('homepage_slider_title', [
+        'label'    => __('Tiêu đề Slider', 'ShopCar'),
+        'section'  => 'shopcar_homepage_settings',
+        'type'     => 'text',
+    ]);
+
+    // Slider Subtitle
+    $wp_customize->add_setting('homepage_slider_subtitle', [
+        'default'           => 'Luxury • Performance • Quality',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('homepage_slider_subtitle', [
+        'label'    => __('Phụ đề Slider', 'ShopCar'),
+        'section'  => 'shopcar_homepage_settings',
+        'type'     => 'text',
+    ]);
+
+    // Slider Button Text
+    $wp_customize->add_setting('homepage_slider_button_text', [
+        'default'           => 'Shop Now',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('homepage_slider_button_text', [
+        'label'    => __('Text nút Slider', 'ShopCar'),
+        'section'  => 'shopcar_homepage_settings',
+        'type'     => 'text',
+    ]);
+
+    // Slider Image
+    $wp_customize->add_setting('homepage_slider_image', [
+        'default'           => '',
+        'sanitize_callback' => 'esc_url_raw',
+        'transport'         => 'refresh',
+    ]);
+    $wp_customize->add_control(new WP_Customize_Image_Control($wp_customize, 'homepage_slider_image', [
+        'label'    => __('Hình ảnh Slider', 'ShopCar'),
+        'section'  => 'shopcar_homepage_settings',
+    ]));
+
+    // Categories Section Title
+    $wp_customize->add_setting('homepage_categories_title', [
+        'default'           => 'Browse by Category',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('homepage_categories_title', [
+        'label'    => __('Tiêu đề Section Categories', 'ShopCar'),
+        'section'  => 'shopcar_homepage_settings',
+        'type'     => 'text',
+    ]);
+
+    // Products Section Title
+    $wp_customize->add_setting('homepage_products_title', [
+        'default'           => 'Explore Our Products',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('homepage_products_title', [
+        'label'    => __('Tiêu đề Section Products', 'ShopCar'),
+        'section'  => 'shopcar_homepage_settings',
+        'type'     => 'text',
+    ]);
+
+    // Products Count
+    $wp_customize->add_setting('homepage_products_count', [
+        'default'           => '6',
+        'sanitize_callback' => 'absint',
+        'transport'         => 'refresh',
+    ]);
+    $wp_customize->add_control('homepage_products_count', [
+        'label'    => __('Số lượng sản phẩm hiển thị', 'ShopCar'),
+        'section'  => 'shopcar_homepage_settings',
+        'type'     => 'number',
+        'input_attrs' => [
+            'min'  => 3,
+            'max'  => 12,
+            'step' => 1,
+        ],
+    ]);
+
+    // Newsletter Title
+    $wp_customize->add_setting('homepage_newsletter_title', [
+        'default'           => 'Get Weekly Updates',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('homepage_newsletter_title', [
+        'label'    => __('Tiêu đề Newsletter', 'ShopCar'),
+        'section'  => 'shopcar_homepage_settings',
+        'type'     => 'text',
+    ]);
+
+    // Newsletter Placeholder
+    $wp_customize->add_setting('homepage_newsletter_placeholder', [
+        'default'           => 'example@gmail.com',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('homepage_newsletter_placeholder', [
+        'label'    => __('Placeholder Newsletter', 'ShopCar'),
+        'section'  => 'shopcar_homepage_settings',
+        'type'     => 'text',
+    ]);
+}
+
+// === PAGE CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_page_customizer_settings');
+function shopcar_page_customizer_settings($wp_customize) {
+    
+    // === CONTACT PAGE SECTION ===
+    $wp_customize->add_section('shopcar_contact_page_settings', [
+        'title'    => __('Contact Page Settings', 'ShopCar'),
+        'priority' => 60,
+    ]);
+
+    // Contact Address
+    $wp_customize->add_setting('contact_page_address', [
+        'default'           => '685 Market Street, Las Vegas, LA 95820, USA',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('contact_page_address', [
+        'label'    => __('Địa chỉ Showroom', 'ShopCar'),
+        'section'  => 'shopcar_contact_page_settings',
+        'type'     => 'textarea',
+    ]);
+
+    // Contact Phone
+    $wp_customize->add_setting('contact_page_phone', [
+        'default'           => '(+01) 850-315-5862',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('contact_page_phone', [
+        'label'    => __('Hotline', 'ShopCar'),
+        'section'  => 'shopcar_contact_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Contact Email
+    $wp_customize->add_setting('contact_page_email', [
+        'default'           => 'hello@cardealer.com',
+        'sanitize_callback' => 'sanitize_email',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('contact_page_email', [
+        'label'    => __('Email liên hệ', 'ShopCar'),
+        'section'  => 'shopcar_contact_page_settings',
+        'type'     => 'email',
+    ]);
+
+    // Contact Zalo
+    $wp_customize->add_setting('contact_page_zalo', [
+        'default'           => '#',
+        'sanitize_callback' => 'esc_url_raw',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('contact_page_zalo', [
+        'label'    => __('Link Zalo', 'ShopCar'),
+        'section'  => 'shopcar_contact_page_settings',
+        'type'     => 'url',
+    ]);
+
+    // Working Hours
+    $wp_customize->add_setting('contact_page_working_hours', [
+        'default'           => 'Thứ 2 – Thứ 7: 8:00 - 20:00\nChủ nhật: 9:00 - 17:00',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('contact_page_working_hours', [
+        'label'    => __('Giờ làm việc', 'ShopCar'),
+        'section'  => 'shopcar_contact_page_settings',
+        'type'     => 'textarea',
+    ]);
+
+    // Google Maps URL
+    $wp_customize->add_setting('contact_page_map_url', [
+        'default'           => 'https://www.google.com/maps?q=toyota%20showroom&t=&z=12&ie=UTF8&iwloc=&output=embed',
+        'sanitize_callback' => 'esc_url_raw',
+        'transport'         => 'refresh',
+    ]);
+    $wp_customize->add_control('contact_page_map_url', [
+        'label'    => __('Google Maps Embed URL', 'ShopCar'),
+        'section'  => 'shopcar_contact_page_settings',
+        'type'     => 'url',
+        'description' => __('Dán URL embed từ Google Maps', 'ShopCar'),
+    ]);
+
+    // === ABOUT PAGE SECTION ===
+    $wp_customize->add_section('shopcar_about_page_settings', [
+        'title'    => __('About Page Settings', 'ShopCar'),
+        'priority' => 61,
+    ]);
+
+    // About Title
+    $wp_customize->add_setting('about_page_title', [
+        'default'           => 'Chúng tôi là đại lý ô tô uy tín – nơi bạn tìm được chiếc xe phù hợp nhất.',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('about_page_title', [
+        'label'    => __('Tiêu đề chính', 'ShopCar'),
+        'section'  => 'shopcar_about_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // About Description
+    $wp_customize->add_setting('about_page_description', [
+        'default'           => 'Với nhiều năm kinh nghiệm trong lĩnh vực mua bán xe hơi, chúng tôi cam kết mang đến cho khách hàng những mẫu xe chất lượng, giá tốt, kèm theo chính sách bảo hành – bảo dưỡng tối ưu.',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('about_page_description', [
+        'label'    => __('Mô tả', 'ShopCar'),
+        'section'  => 'shopcar_about_page_settings',
+        'type'     => 'textarea',
+    ]);
+
+    // Stats - Cars Sold
+    $wp_customize->add_setting('about_page_stats_cars', [
+        'default'           => '5,000+',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('about_page_stats_cars', [
+        'label'    => __('Số xe đã bán', 'ShopCar'),
+        'section'  => 'shopcar_about_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Stats - Years Experience
+    $wp_customize->add_setting('about_page_stats_years', [
+        'default'           => '10+',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('about_page_stats_years', [
+        'label'    => __('Số năm kinh nghiệm', 'ShopCar'),
+        'section'  => 'shopcar_about_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Stats - Satisfaction
+    $wp_customize->add_setting('about_page_stats_satisfaction', [
+        'default'           => '98%',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('about_page_stats_satisfaction', [
+        'label'    => __('Tỷ lệ hài lòng', 'ShopCar'),
+        'section'  => 'shopcar_about_page_settings',
+        'type'     => 'text',
+    ]);
+}
+
+// === COLOR SCHEME SETTINGS ===
+add_action('customize_register', 'shopcar_color_scheme_settings');
+function shopcar_color_scheme_settings($wp_customize) {
+    
+    // === COLOR SCHEME SECTION ===
+    $wp_customize->add_section('shopcar_color_scheme', [
+        'title'    => __('Color Scheme', 'ShopCar'),
+        'priority' => 70,
+    ]);
+
+    // Primary Color
+    $wp_customize->add_setting('color_primary', [
+        'default'           => '#007bff',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'color_primary', [
+        'label'    => __('Màu chính (Primary)', 'ShopCar'),
+        'section'  => 'shopcar_color_scheme',
+    ]));
+
+    // Secondary Color
+    $wp_customize->add_setting('color_secondary', [
+        'default'           => '#6c757d',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'color_secondary', [
+        'label'    => __('Màu phụ (Secondary)', 'ShopCar'),
+        'section'  => 'shopcar_color_scheme',
+    ]));
+
+    // Accent Color
+    $wp_customize->add_setting('color_accent', [
+        'default'           => '#ff497c',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'color_accent', [
+        'label'    => __('Màu nhấn (Accent)', 'ShopCar'),
+        'section'  => 'shopcar_color_scheme',
+    ]));
+
+    // Text Color
+    $wp_customize->add_setting('color_text', [
+        'default'           => '#222222',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'color_text', [
+        'label'    => __('Màu chữ chính', 'ShopCar'),
+        'section'  => 'shopcar_color_scheme',
+    ]));
+
+    // Background Color
+    $wp_customize->add_setting('color_background', [
+        'default'           => '#ffffff',
+        'sanitize_callback' => 'sanitize_hex_color',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'color_background', [
+        'label'    => __('Màu nền chính', 'ShopCar'),
+        'section'  => 'shopcar_color_scheme',
+    ]));
+}
+
+// === TYPOGRAPHY SETTINGS ===
+add_action('customize_register', 'shopcar_typography_settings');
+function shopcar_typography_settings($wp_customize) {
+    
+    // === TYPOGRAPHY SECTION ===
+    $wp_customize->add_section('shopcar_typography', [
+        'title'    => __('Typography', 'ShopCar'),
+        'priority' => 80,
+    ]);
+
+    // Body Font Size
+    $wp_customize->add_setting('typography_body_size', [
+        'default'           => '16',
+        'sanitize_callback' => 'absint',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('typography_body_size', [
+        'label'    => __('Kích thước chữ Body (px)', 'ShopCar'),
+        'section'  => 'shopcar_typography',
+        'type'     => 'number',
+        'input_attrs' => [
+            'min'  => 12,
+            'max'  => 24,
+            'step' => 1,
+        ],
+    ]);
+
+    // Heading Font Size
+    $wp_customize->add_setting('typography_heading_size', [
+        'default'           => '32',
+        'sanitize_callback' => 'absint',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('typography_heading_size', [
+        'label'    => __('Kích thước chữ Heading (px)', 'ShopCar'),
+        'section'  => 'shopcar_typography',
+        'type'     => 'number',
+        'input_attrs' => [
+            'min'  => 20,
+            'max'  => 60,
+            'step' => 1,
+        ],
+    ]);
+
+    // Font Family
+    $wp_customize->add_setting('typography_font_family', [
+        'default'           => 'Arial, sans-serif',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('typography_font_family', [
+        'label'    => __('Font Family', 'ShopCar'),
+        'section'  => 'shopcar_typography',
+        'type'     => 'select',
+        'choices'  => [
+            'Arial, sans-serif' => 'Arial',
+            'Georgia, serif' => 'Georgia',
+            '"Times New Roman", serif' => 'Times New Roman',
+            '"Helvetica Neue", Helvetica, Arial, sans-serif' => 'Helvetica',
+            '"Roboto", sans-serif' => 'Roboto',
+            '"Open Sans", sans-serif' => 'Open Sans',
+        ],
+    ]);
+}
+
+// === SERVICE PAGE CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_service_page_customizer_settings');
+function shopcar_service_page_customizer_settings($wp_customize) {
+    
+    $wp_customize->add_section('shopcar_service_page_settings', [
+        'title'    => __('Service Page Settings', 'ShopCar'),
+        'priority' => 62,
+    ]);
+
+    $wp_customize->add_setting('service_page_title', [
+        'default'           => 'Chăm sóc & bảo dưỡng xe toàn diện',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('service_page_title', [
+        'label'    => __('Tiêu đề chính', 'ShopCar'),
+        'section'  => 'shopcar_service_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('service_page_description', [
+        'default'           => 'Showroom của chúng tôi cung cấp đầy đủ dịch vụ từ bảo dưỡng định kỳ, sửa chữa kỹ thuật, thay thế phụ tùng chính hãng cho đến chăm sóc ngoại thất – nội thất.',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('service_page_description', [
+        'label'    => __('Mô tả', 'ShopCar'),
+        'section'  => 'shopcar_service_page_settings',
+        'type'     => 'textarea',
+    ]);
+
+    $wp_customize->add_setting('service_booking_title', [
+        'default'           => 'Đặt lịch bảo dưỡng / kiểm tra xe',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('service_booking_title', [
+        'label'    => __('Tiêu đề Booking', 'ShopCar'),
+        'section'  => 'shopcar_service_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('service_booking_description', [
+        'default'           => 'Chúng tôi sẽ liên hệ xác nhận trong vòng 15 phút.',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('service_booking_description', [
+        'label'    => __('Mô tả Booking', 'ShopCar'),
+        'section'  => 'shopcar_service_page_settings',
+        'type'     => 'text',
+    ]);
+}
+
+// === VOUCHER PAGE CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_voucher_page_customizer_settings');
+function shopcar_voucher_page_customizer_settings($wp_customize) {
+    
+    $wp_customize->add_section('shopcar_voucher_page_settings', [
+        'title'    => __('Voucher Page Settings', 'ShopCar'),
+        'priority' => 63,
+    ]);
+
+    $wp_customize->add_setting('voucher_page_title', [
+        'default'           => 'Mã giảm giá',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('voucher_page_title', [
+        'label'    => __('Tiêu đề', 'ShopCar'),
+        'section'  => 'shopcar_voucher_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('voucher_placeholder', [
+        'default'           => 'Nhập mã giảm giá...',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('voucher_placeholder', [
+        'label'    => __('Placeholder input', 'ShopCar'),
+        'section'  => 'shopcar_voucher_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Voucher suggestions
+    for ($i = 1; $i <= 3; $i++) {
+        $wp_customize->add_setting('voucher_suggestion_' . $i . '_code', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('voucher_suggestion_' . $i . '_code', [
+            'label'    => sprintf(__('Mã voucher %d', 'ShopCar'), $i),
+            'section'  => 'shopcar_voucher_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('voucher_suggestion_' . $i . '_desc', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('voucher_suggestion_' . $i . '_desc', [
+            'label'    => sprintf(__('Mô tả voucher %d', 'ShopCar'), $i),
+            'section'  => 'shopcar_voucher_page_settings',
+            'type'     => 'text',
+        ]);
+    }
+
+    $wp_customize->add_setting('voucher_suggestions_title', [
+        'default'           => 'Gợi ý voucher',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('voucher_suggestions_title', [
+        'label'    => __('Tiêu đề Suggestions', 'ShopCar'),
+        'section'  => 'shopcar_voucher_page_settings',
+        'type'     => 'text',
+    ]);
+}
+
+// === ORDER TRACKING PAGE CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_order_tracking_page_customizer_settings');
+function shopcar_order_tracking_page_customizer_settings($wp_customize) {
+    
+    $wp_customize->add_section('shopcar_order_tracking_page_settings', [
+        'title'    => __('Order Tracking Page Settings', 'ShopCar'),
+        'priority' => 65,
+    ]);
+
+    $wp_customize->add_setting('order_tracking_page_title', [
+        'default'           => 'Tra cứu đơn hàng',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('order_tracking_page_title', [
+        'label'    => __('Tiêu đề trang', 'ShopCar'),
+        'section'  => 'shopcar_order_tracking_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('order_tracking_order_id_placeholder', [
+        'default'           => 'Nhập mã đơn hàng (VD: 2536)',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('order_tracking_order_id_placeholder', [
+        'label'    => __('Placeholder Mã đơn hàng', 'ShopCar'),
+        'section'  => 'shopcar_order_tracking_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('order_tracking_email_placeholder', [
+        'default'           => 'Email hoặc số điện thoại',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('order_tracking_email_placeholder', [
+        'label'    => __('Placeholder Email/SĐT', 'ShopCar'),
+        'section'  => 'shopcar_order_tracking_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('order_tracking_button_text', [
+        'default'           => 'Tra cứu',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('order_tracking_button_text', [
+        'label'    => __('Text nút', 'ShopCar'),
+        'section'  => 'shopcar_order_tracking_page_settings',
+        'type'     => 'text',
+    ]);
+}
+
+// === FAQ PAGE CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_faq_page_customizer_settings');
+function shopcar_faq_page_customizer_settings($wp_customize) {
+    
+    $wp_customize->add_section('shopcar_faq_page_settings', [
+        'title'    => __('FAQ Page Settings', 'ShopCar'),
+        'priority' => 64,
+    ]);
+
+    $wp_customize->add_setting('faq_page_title', [
+        'default'           => 'Câu hỏi thường gặp',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('faq_page_title', [
+        'label'    => __('Tiêu đề trang', 'ShopCar'),
+        'section'  => 'shopcar_faq_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('faq_page_description', [
+        'default'           => 'Tổng hợp các câu hỏi thường gặp về mua bán, bảo hành và dịch vụ xe hơi.',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('faq_page_description', [
+        'label'    => __('Mô tả', 'ShopCar'),
+        'section'  => 'shopcar_faq_page_settings',
+        'type'     => 'textarea',
+    ]);
+
+    // FAQ Items (10 items)
+    for ($i = 1; $i <= 10; $i++) {
+        $wp_customize->add_setting('faq_question_' . $i, [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('faq_question_' . $i, [
+            'label'    => sprintf(__('Câu hỏi %d', 'ShopCar'), $i),
+            'section'  => 'shopcar_faq_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('faq_answer_' . $i, [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_textarea_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('faq_answer_' . $i, [
+            'label'    => sprintf(__('Câu trả lời %d', 'ShopCar'), $i),
+            'section'  => 'shopcar_faq_page_settings',
+            'type'     => 'textarea',
+        ]);
+    }
+
+    $wp_customize->add_setting('faq_cta_title', [
+        'default'           => 'Vẫn còn thắc mắc?',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('faq_cta_title', [
+        'label'    => __('CTA Tiêu đề', 'ShopCar'),
+        'section'  => 'shopcar_faq_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('faq_cta_description', [
+        'default'           => 'Liên hệ với chúng tôi để được tư vấn chi tiết hơn.',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('faq_cta_description', [
+        'label'    => __('CTA Mô tả', 'ShopCar'),
+        'section'  => 'shopcar_faq_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('faq_cta_button_text', [
+        'default'           => 'Liên hệ ngay',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('faq_cta_button_text', [
+        'label'    => __('CTA Button Text', 'ShopCar'),
+        'section'  => 'shopcar_faq_page_settings',
+        'type'     => 'text',
+    ]);
+}
+
+// === BLOG PAGE CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_blog_page_customizer_settings');
+function shopcar_blog_page_customizer_settings($wp_customize) {
+    
+    $wp_customize->add_section('shopcar_blog_page_settings', [
+        'title'    => __('Blog Page Settings', 'ShopCar'),
+        'priority' => 65,
+    ]);
+
+    $wp_customize->add_setting('blog_page_title', [
+        'default'           => 'Tin tức & Blog',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('blog_page_title', [
+        'label'    => __('Tiêu đề trang', 'ShopCar'),
+        'section'  => 'shopcar_blog_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('blog_page_description', [
+        'default'           => 'Cập nhật tin tức mới nhất về thị trường xe hơi, đánh giá xe và mẹo sử dụng xe.',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('blog_page_description', [
+        'label'    => __('Mô tả', 'ShopCar'),
+        'section'  => 'shopcar_blog_page_settings',
+        'type'     => 'textarea',
+    ]);
+
+    $wp_customize->add_setting('blog_posts_per_page', [
+        'default'           => '6',
+        'sanitize_callback' => 'absint',
+        'transport'         => 'refresh',
+    ]);
+    $wp_customize->add_control('blog_posts_per_page', [
+        'label'    => __('Số bài viết mỗi trang', 'ShopCar'),
+        'section'  => 'shopcar_blog_page_settings',
+        'type'     => 'number',
+        'input_attrs' => [
+            'min'  => 3,
+            'max'  => 20,
+            'step' => 1,
+        ],
+    ]);
+
+    $wp_customize->add_setting('blog_read_more_text', [
+        'default'           => 'Đọc thêm',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('blog_read_more_text', [
+        'label'    => __('Text nút "Đọc thêm"', 'ShopCar'),
+        'section'  => 'shopcar_blog_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('blog_no_posts_text', [
+        'default'           => 'Chưa có bài viết nào.',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('blog_no_posts_text', [
+        'label'    => __('Text khi không có bài viết', 'ShopCar'),
+        'section'  => 'shopcar_blog_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('blog_sidebar_title', [
+        'default'           => 'Bài viết mới nhất',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('blog_sidebar_title', [
+        'label'    => __('Tiêu đề Sidebar', 'ShopCar'),
+        'section'  => 'shopcar_blog_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('blog_categories_title', [
+        'default'           => 'Danh mục',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('blog_categories_title', [
+        'label'    => __('Tiêu đề Categories', 'ShopCar'),
+        'section'  => 'shopcar_blog_page_settings',
+        'type'     => 'text',
+    ]);
+}
+
+// === FINANCING PAGE CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_financing_page_customizer_settings');
+function shopcar_financing_page_customizer_settings($wp_customize) {
+    
+    $wp_customize->add_section('shopcar_financing_page_settings', [
+        'title'    => __('Financing Page Settings', 'ShopCar'),
+        'priority' => 66,
+    ]);
+
+    $wp_customize->add_setting('financing_page_title', [
+        'default'           => 'Tài chính & Trả góp',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('financing_page_title', [
+        'label'    => __('Tiêu đề trang', 'ShopCar'),
+        'section'  => 'shopcar_financing_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('financing_page_description', [
+        'default'           => 'Giải pháp tài chính linh hoạt, giúp bạn sở hữu chiếc xe mơ ước dễ dàng hơn.',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('financing_page_description', [
+        'label'    => __('Mô tả', 'ShopCar'),
+        'section'  => 'shopcar_financing_page_settings',
+        'type'     => 'textarea',
+    ]);
+
+    $wp_customize->add_setting('financing_options_title', [
+        'default'           => 'Các gói tài chính',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('financing_options_title', [
+        'label'    => __('Tiêu đề Options', 'ShopCar'),
+        'section'  => 'shopcar_financing_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Financing Options (3 options)
+    for ($i = 1; $i <= 3; $i++) {
+        $wp_customize->add_setting('financing_option' . $i . '_title', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('financing_option' . $i . '_title', [
+            'label'    => sprintf(__('Option %d - Tiêu đề', 'ShopCar'), $i),
+            'section'  => 'shopcar_financing_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('financing_option' . $i . '_desc', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_textarea_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('financing_option' . $i . '_desc', [
+            'label'    => sprintf(__('Option %d - Mô tả', 'ShopCar'), $i),
+            'section'  => 'shopcar_financing_page_settings',
+            'type'     => 'textarea',
+        ]);
+    }
+
+    $wp_customize->add_setting('financing_calculator_title', [
+        'default'           => 'Tính toán trả góp',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('financing_calculator_title', [
+        'label'    => __('Tiêu đề Calculator', 'ShopCar'),
+        'section'  => 'shopcar_financing_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('financing_calculate_button_text', [
+        'default'           => 'Tính toán',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('financing_calculate_button_text', [
+        'label'    => __('Text nút Calculator', 'ShopCar'),
+        'section'  => 'shopcar_financing_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('financing_requirements_title', [
+        'default'           => 'Điều kiện vay',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('financing_requirements_title', [
+        'label'    => __('Tiêu đề Requirements', 'ShopCar'),
+        'section'  => 'shopcar_financing_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Requirements (4 items)
+    for ($i = 1; $i <= 4; $i++) {
+        $wp_customize->add_setting('requirement' . $i . '_title', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('requirement' . $i . '_title', [
+            'label'    => sprintf(__('Requirement %d - Tiêu đề', 'ShopCar'), $i),
+            'section'  => 'shopcar_financing_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('requirement' . $i . '_desc', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('requirement' . $i . '_desc', [
+            'label'    => sprintf(__('Requirement %d - Mô tả', 'ShopCar'), $i),
+            'section'  => 'shopcar_financing_page_settings',
+            'type'     => 'text',
+        ]);
+    }
+
+    $wp_customize->add_setting('financing_button_text', [
+        'default'           => 'Đăng ký tư vấn tài chính',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('financing_button_text', [
+        'label'    => __('Text nút CTA', 'ShopCar'),
+        'section'  => 'shopcar_financing_page_settings',
+        'type'     => 'text',
+    ]);
+}
+
+// === WARRANTY PAGE CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_warranty_page_customizer_settings');
+function shopcar_warranty_page_customizer_settings($wp_customize) {
+    
+    $wp_customize->add_section('shopcar_warranty_page_settings', [
+        'title'    => __('Warranty Page Settings', 'ShopCar'),
+        'priority' => 67,
+    ]);
+
+    $wp_customize->add_setting('warranty_page_title', [
+        'default'           => 'Bảo hành & Bảo dưỡng',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('warranty_page_title', [
+        'label'    => __('Tiêu đề trang', 'ShopCar'),
+        'section'  => 'shopcar_warranty_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('warranty_intro_title', [
+        'default'           => 'Chính sách bảo hành toàn diện',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('warranty_intro_title', [
+        'label'    => __('Tiêu đề Intro', 'ShopCar'),
+        'section'  => 'shopcar_warranty_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('warranty_intro_description', [
+        'default'           => 'Chúng tôi cam kết mang đến dịch vụ bảo hành và bảo dưỡng tốt nhất cho chiếc xe của bạn.',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('warranty_intro_description', [
+        'label'    => __('Mô tả Intro', 'ShopCar'),
+        'section'  => 'shopcar_warranty_page_settings',
+        'type'     => 'textarea',
+    ]);
+
+    $wp_customize->add_setting('warranty_policies_title', [
+        'default'           => 'Chính sách bảo hành',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('warranty_policies_title', [
+        'label'    => __('Tiêu đề Policies', 'ShopCar'),
+        'section'  => 'shopcar_warranty_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Warranty Policies (4 items)
+    for ($i = 1; $i <= 4; $i++) {
+        $wp_customize->add_setting('warranty_policy' . $i . '_title', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('warranty_policy' . $i . '_title', [
+            'label'    => sprintf(__('Policy %d - Tiêu đề', 'ShopCar'), $i),
+            'section'  => 'shopcar_warranty_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('warranty_policy' . $i . '_desc', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('warranty_policy' . $i . '_desc', [
+            'label'    => sprintf(__('Policy %d - Mô tả', 'ShopCar'), $i),
+            'section'  => 'shopcar_warranty_page_settings',
+            'type'     => 'text',
+        ]);
+    }
+
+    $wp_customize->add_setting('maintenance_services_title', [
+        'default'           => 'Dịch vụ bảo dưỡng',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('maintenance_services_title', [
+        'label'    => __('Tiêu đề Maintenance Services', 'ShopCar'),
+        'section'  => 'shopcar_warranty_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Maintenance Services (3 items)
+    for ($i = 1; $i <= 3; $i++) {
+        $wp_customize->add_setting('maintenance_service' . $i . '_title', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('maintenance_service' . $i . '_title', [
+            'label'    => sprintf(__('Service %d - Tiêu đề', 'ShopCar'), $i),
+            'section'  => 'shopcar_warranty_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('maintenance_service' . $i . '_desc', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('maintenance_service' . $i . '_desc', [
+            'label'    => sprintf(__('Service %d - Mô tả', 'ShopCar'), $i),
+            'section'  => 'shopcar_warranty_page_settings',
+            'type'     => 'text',
+        ]);
+    }
+
+    $wp_customize->add_setting('warranty_page_button_text', [
+        'default'           => 'Liên hệ đặt lịch',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('warranty_page_button_text', [
+        'label'    => __('Text nút CTA', 'ShopCar'),
+        'section'  => 'shopcar_warranty_page_settings',
+        'type'     => 'text',
+    ]);
+}
+
+// === SHOWROOM PAGE CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_showroom_page_customizer_settings');
+function shopcar_showroom_page_customizer_settings($wp_customize) {
+    
+    $wp_customize->add_section('shopcar_showroom_page_settings', [
+        'title'    => __('Showroom Page Settings', 'ShopCar'),
+        'priority' => 68,
+    ]);
+
+    $wp_customize->add_setting('showroom_page_title', [
+        'default'           => 'Showroom & Đại lý',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('showroom_page_title', [
+        'label'    => __('Tiêu đề trang', 'ShopCar'),
+        'section'  => 'shopcar_showroom_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('showroom_page_description', [
+        'default'           => 'Hệ thống showroom và đại lý trên toàn quốc, sẵn sàng phục vụ bạn.',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('showroom_page_description', [
+        'label'    => __('Mô tả', 'ShopCar'),
+        'section'  => 'shopcar_showroom_page_settings',
+        'type'     => 'textarea',
+    ]);
+
+    $wp_customize->add_setting('main_showroom_title', [
+        'default'           => 'Showroom chính',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('main_showroom_title', [
+        'label'    => __('Tiêu đề Main Showroom', 'ShopCar'),
+        'section'  => 'shopcar_showroom_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Showrooms (2 main showrooms)
+    for ($i = 1; $i <= 2; $i++) {
+        $wp_customize->add_setting('showroom' . $i . '_name', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('showroom' . $i . '_name', [
+            'label'    => sprintf(__('Showroom %d - Tên', 'ShopCar'), $i),
+            'section'  => 'shopcar_showroom_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('showroom' . $i . '_address', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('showroom' . $i . '_address', [
+            'label'    => sprintf(__('Showroom %d - Địa chỉ', 'ShopCar'), $i),
+            'section'  => 'shopcar_showroom_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('showroom' . $i . '_phone', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('showroom' . $i . '_phone', [
+            'label'    => sprintf(__('Showroom %d - SĐT', 'ShopCar'), $i),
+            'section'  => 'shopcar_showroom_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('showroom' . $i . '_hours', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('showroom' . $i . '_hours', [
+            'label'    => sprintf(__('Showroom %d - Giờ làm việc', 'ShopCar'), $i),
+            'section'  => 'shopcar_showroom_page_settings',
+            'type'     => 'text',
+        ]);
+    }
+
+    $wp_customize->add_setting('dealers_title', [
+        'default'           => 'Hệ thống đại lý',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('dealers_title', [
+        'label'    => __('Tiêu đề Dealers', 'ShopCar'),
+        'section'  => 'shopcar_showroom_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Dealers (6 dealers)
+    for ($i = 1; $i <= 6; $i++) {
+        $wp_customize->add_setting('dealer' . $i . '_name', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('dealer' . $i . '_name', [
+            'label'    => sprintf(__('Dealer %d - Tên', 'ShopCar'), $i),
+            'section'  => 'shopcar_showroom_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('dealer' . $i . '_address', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('dealer' . $i . '_address', [
+            'label'    => sprintf(__('Dealer %d - Địa chỉ', 'ShopCar'), $i),
+            'section'  => 'shopcar_showroom_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('dealer' . $i . '_phone', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('dealer' . $i . '_phone', [
+            'label'    => sprintf(__('Dealer %d - SĐT', 'ShopCar'), $i),
+            'section'  => 'shopcar_showroom_page_settings',
+            'type'     => 'text',
+        ]);
+    }
+
+    $wp_customize->add_setting('showroom_map_title', [
+        'default'           => 'Bản đồ showroom',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('showroom_map_title', [
+        'label'    => __('Tiêu đề Map', 'ShopCar'),
+        'section'  => 'shopcar_showroom_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('showroom_map_url', [
+        'default'           => 'https://www.google.com/maps?q=car+showroom&t=&z=12&ie=UTF8&iwloc=&output=embed',
+        'sanitize_callback' => 'esc_url_raw',
+        'transport'         => 'refresh',
+    ]);
+    $wp_customize->add_control('showroom_map_url', [
+        'label'    => __('Google Maps URL', 'ShopCar'),
+        'section'  => 'shopcar_showroom_page_settings',
+        'type'     => 'url',
+    ]);
+}
+
+// === BUYING GUIDE PAGE CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_buying_guide_page_customizer_settings');
+function shopcar_buying_guide_page_customizer_settings($wp_customize) {
+    
+    $wp_customize->add_section('shopcar_buying_guide_page_settings', [
+        'title'    => __('Buying Guide Page Settings', 'ShopCar'),
+        'priority' => 69,
+    ]);
+
+    $wp_customize->add_setting('buying_guide_page_title', [
+        'default'           => 'Hướng dẫn mua hàng',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('buying_guide_page_title', [
+        'label'    => __('Tiêu đề trang', 'ShopCar'),
+        'section'  => 'shopcar_buying_guide_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('buying_guide_description', [
+        'default'           => 'Hướng dẫn chi tiết quy trình mua xe tại showroom của chúng tôi.',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('buying_guide_description', [
+        'label'    => __('Mô tả', 'ShopCar'),
+        'section'  => 'shopcar_buying_guide_page_settings',
+        'type'     => 'textarea',
+    ]);
+
+    // Buying Steps (5 steps)
+    for ($i = 1; $i <= 5; $i++) {
+        $wp_customize->add_setting('buying_step' . $i . '_title', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('buying_step' . $i . '_title', [
+            'label'    => sprintf(__('Bước %d - Tiêu đề', 'ShopCar'), $i),
+            'section'  => 'shopcar_buying_guide_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('buying_step' . $i . '_desc', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_textarea_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('buying_step' . $i . '_desc', [
+            'label'    => sprintf(__('Bước %d - Mô tả', 'ShopCar'), $i),
+            'section'  => 'shopcar_buying_guide_page_settings',
+            'type'     => 'textarea',
+        ]);
+    }
+
+    $wp_customize->add_setting('payment_methods_title', [
+        'default'           => 'Phương thức thanh toán',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('payment_methods_title', [
+        'label'    => __('Tiêu đề Payment Methods', 'ShopCar'),
+        'section'  => 'shopcar_buying_guide_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Payment Methods (3 methods)
+    for ($i = 1; $i <= 3; $i++) {
+        $wp_customize->add_setting('payment_method' . $i . '_title', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('payment_method' . $i . '_title', [
+            'label'    => sprintf(__('Payment Method %d - Tiêu đề', 'ShopCar'), $i),
+            'section'  => 'shopcar_buying_guide_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('payment_method' . $i . '_desc', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('payment_method' . $i . '_desc', [
+            'label'    => sprintf(__('Payment Method %d - Mô tả', 'ShopCar'), $i),
+            'section'  => 'shopcar_buying_guide_page_settings',
+            'type'     => 'text',
+        ]);
+    }
+
+    $wp_customize->add_setting('buying_guide_button_text', [
+        'default'           => 'Liên hệ tư vấn',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('buying_guide_button_text', [
+        'label'    => __('Text nút CTA', 'ShopCar'),
+        'section'  => 'shopcar_buying_guide_page_settings',
+        'type'     => 'text',
+    ]);
+}
+
+// === PARTS PAGE CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_parts_page_customizer_settings');
+function shopcar_parts_page_customizer_settings($wp_customize) {
+    
+    $wp_customize->add_section('shopcar_parts_page_settings', [
+        'title'    => __('Parts Page Settings', 'ShopCar'),
+        'priority' => 70,
+    ]);
+
+    $wp_customize->add_setting('parts_page_title', [
+        'default'           => 'Phụ tùng & Phụ kiện',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('parts_page_title', [
+        'label'    => __('Tiêu đề trang', 'ShopCar'),
+        'section'  => 'shopcar_parts_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('parts_page_description', [
+        'default'           => 'Cung cấp phụ tùng chính hãng và phụ kiện chất lượng cao cho mọi dòng xe.',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('parts_page_description', [
+        'label'    => __('Mô tả', 'ShopCar'),
+        'section'  => 'shopcar_parts_page_settings',
+        'type'     => 'textarea',
+    ]);
+
+    $wp_customize->add_setting('parts_categories_title', [
+        'default'           => 'Danh mục phụ tùng',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('parts_categories_title', [
+        'label'    => __('Tiêu đề Categories', 'ShopCar'),
+        'section'  => 'shopcar_parts_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Parts Categories (8 categories)
+    for ($i = 1; $i <= 8; $i++) {
+        $wp_customize->add_setting('parts_category' . $i . '_title', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('parts_category' . $i . '_title', [
+            'label'    => sprintf(__('Category %d - Tiêu đề', 'ShopCar'), $i),
+            'section'  => 'shopcar_parts_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('parts_category' . $i . '_desc', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('parts_category' . $i . '_desc', [
+            'label'    => sprintf(__('Category %d - Mô tả', 'ShopCar'), $i),
+            'section'  => 'shopcar_parts_page_settings',
+            'type'     => 'text',
+        ]);
+    }
+
+    $wp_customize->add_setting('accessories_title', [
+        'default'           => 'Phụ kiện xe hơi',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('accessories_title', [
+        'label'    => __('Tiêu đề Accessories', 'ShopCar'),
+        'section'  => 'shopcar_parts_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Accessories (3 items)
+    for ($i = 1; $i <= 3; $i++) {
+        $wp_customize->add_setting('accessory' . $i . '_title', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('accessory' . $i . '_title', [
+            'label'    => sprintf(__('Accessory %d - Tiêu đề', 'ShopCar'), $i),
+            'section'  => 'shopcar_parts_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('accessory' . $i . '_desc', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('accessory' . $i . '_desc', [
+            'label'    => sprintf(__('Accessory %d - Mô tả', 'ShopCar'), $i),
+            'section'  => 'shopcar_parts_page_settings',
+            'type'     => 'text',
+        ]);
+    }
+
+    $wp_customize->add_setting('parts_page_button_text', [
+        'default'           => 'Xem sản phẩm',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('parts_page_button_text', [
+        'label'    => __('Text nút CTA', 'ShopCar'),
+        'section'  => 'shopcar_parts_page_settings',
+        'type'     => 'text',
+    ]);
+}
+
+// === COMPARE PAGE CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_compare_page_customizer_settings');
+function shopcar_compare_page_customizer_settings($wp_customize) {
+    
+    $wp_customize->add_section('shopcar_compare_page_settings', [
+        'title'    => __('Compare Page Settings', 'ShopCar'),
+        'priority' => 71,
+    ]);
+
+    $wp_customize->add_setting('compare_page_title', [
+        'default'           => 'So sánh xe',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('compare_page_title', [
+        'label'    => __('Tiêu đề trang', 'ShopCar'),
+        'section'  => 'shopcar_compare_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('compare_page_description', [
+        'default'           => 'So sánh các mẫu xe để tìm ra lựa chọn phù hợp nhất với nhu cầu của bạn.',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('compare_page_description', [
+        'label'    => __('Mô tả', 'ShopCar'),
+        'section'  => 'shopcar_compare_page_settings',
+        'type'     => 'textarea',
+    ]);
+
+    // Compare Cars (3 cars)
+    for ($i = 1; $i <= 3; $i++) {
+        $wp_customize->add_setting('compare_car' . $i . '_price', [
+            'default'           => 'Liên hệ',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('compare_car' . $i . '_price', [
+            'label'    => sprintf(__('Xe %d - Giá', 'ShopCar'), $i),
+            'section'  => 'shopcar_compare_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('compare_car' . $i . '_brand', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('compare_car' . $i . '_brand', [
+            'label'    => sprintf(__('Xe %d - Hãng', 'ShopCar'), $i),
+            'section'  => 'shopcar_compare_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('compare_car' . $i . '_engine', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('compare_car' . $i . '_engine', [
+            'label'    => sprintf(__('Xe %d - Động cơ', 'ShopCar'), $i),
+            'section'  => 'shopcar_compare_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('compare_car' . $i . '_transmission', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('compare_car' . $i . '_transmission', [
+            'label'    => sprintf(__('Xe %d - Hộp số', 'ShopCar'), $i),
+            'section'  => 'shopcar_compare_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('compare_car' . $i . '_fuel', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('compare_car' . $i . '_fuel', [
+            'label'    => sprintf(__('Xe %d - Tiêu thụ nhiên liệu', 'ShopCar'), $i),
+            'section'  => 'shopcar_compare_page_settings',
+            'type'     => 'text',
+        ]);
+    }
+
+    $wp_customize->add_setting('compare_page_button_text', [
+        'default'           => 'Xem tất cả xe',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('compare_page_button_text', [
+        'label'    => __('Text nút CTA', 'ShopCar'),
+        'section'  => 'shopcar_compare_page_settings',
+        'type'     => 'text',
+    ]);
+}
+
+// === CONSULTATION PAGE CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_consultation_page_customizer_settings');
+function shopcar_consultation_page_customizer_settings($wp_customize) {
+    
+    $wp_customize->add_section('shopcar_consultation_page_settings', [
+        'title'    => __('Consultation Page Settings', 'ShopCar'),
+        'priority' => 72,
+    ]);
+
+    $wp_customize->add_setting('consultation_page_title', [
+        'default'           => 'Tư vấn mua xe',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('consultation_page_title', [
+        'label'    => __('Tiêu đề trang', 'ShopCar'),
+        'section'  => 'shopcar_consultation_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('consultation_page_description', [
+        'default'           => 'Điền thông tin để nhận tư vấn miễn phí từ chuyên gia của chúng tôi.',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('consultation_page_description', [
+        'label'    => __('Mô tả', 'ShopCar'),
+        'section'  => 'shopcar_consultation_page_settings',
+        'type'     => 'textarea',
+    ]);
+
+    $wp_customize->add_setting('consultation_benefits_title', [
+        'default'           => 'Lợi ích khi tư vấn với chúng tôi',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('consultation_benefits_title', [
+        'label'    => __('Tiêu đề Benefits', 'ShopCar'),
+        'section'  => 'shopcar_consultation_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Benefits (3 items)
+    for ($i = 1; $i <= 3; $i++) {
+        $wp_customize->add_setting('consultation_benefit' . $i . '_title', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('consultation_benefit' . $i . '_title', [
+            'label'    => sprintf(__('Benefit %d - Tiêu đề', 'ShopCar'), $i),
+            'section'  => 'shopcar_consultation_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('consultation_benefit' . $i . '_desc', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('consultation_benefit' . $i . '_desc', [
+            'label'    => sprintf(__('Benefit %d - Mô tả', 'ShopCar'), $i),
+            'section'  => 'shopcar_consultation_page_settings',
+            'type'     => 'text',
+        ]);
+    }
+
+    $wp_customize->add_setting('consultation_page_button_text', [
+        'default'           => 'Gửi yêu cầu tư vấn',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('consultation_page_button_text', [
+        'label'    => __('Text nút Submit', 'ShopCar'),
+        'section'  => 'shopcar_consultation_page_settings',
+        'type'     => 'text',
+    ]);
+}
+
+// === TRADE IN PAGE CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_trade_in_page_customizer_settings');
+function shopcar_trade_in_page_customizer_settings($wp_customize) {
+    
+    $wp_customize->add_section('shopcar_trade_in_page_settings', [
+        'title'    => __('Trade In Page Settings', 'ShopCar'),
+        'priority' => 73,
+    ]);
+
+    $wp_customize->add_setting('trade_in_page_title', [
+        'default'           => 'Thu mua xe cũ',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('trade_in_page_title', [
+        'label'    => __('Tiêu đề trang', 'ShopCar'),
+        'section'  => 'shopcar_trade_in_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('trade_in_page_description', [
+        'default'           => 'Bán xe cũ của bạn với giá tốt nhất, đổi xe mới dễ dàng hơn.',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('trade_in_page_description', [
+        'label'    => __('Mô tả', 'ShopCar'),
+        'section'  => 'shopcar_trade_in_page_settings',
+        'type'     => 'textarea',
+    ]);
+
+    $wp_customize->add_setting('trade_in_benefits_title', [
+        'default'           => 'Lợi ích khi bán xe cho chúng tôi',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('trade_in_benefits_title', [
+        'label'    => __('Tiêu đề Benefits', 'ShopCar'),
+        'section'  => 'shopcar_trade_in_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Benefits (3 items)
+    for ($i = 1; $i <= 3; $i++) {
+        $wp_customize->add_setting('trade_in_benefit' . $i . '_title', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('trade_in_benefit' . $i . '_title', [
+            'label'    => sprintf(__('Benefit %d - Tiêu đề', 'ShopCar'), $i),
+            'section'  => 'shopcar_trade_in_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('trade_in_benefit' . $i . '_desc', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('trade_in_benefit' . $i . '_desc', [
+            'label'    => sprintf(__('Benefit %d - Mô tả', 'ShopCar'), $i),
+            'section'  => 'shopcar_trade_in_page_settings',
+            'type'     => 'text',
+        ]);
+    }
+
+    $wp_customize->add_setting('trade_in_process_title', [
+        'default'           => 'Quy trình thu mua',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('trade_in_process_title', [
+        'label'    => __('Tiêu đề Process', 'ShopCar'),
+        'section'  => 'shopcar_trade_in_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Process Steps (4 steps)
+    for ($i = 1; $i <= 4; $i++) {
+        $wp_customize->add_setting('trade_in_step' . $i . '_title', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('trade_in_step' . $i . '_title', [
+            'label'    => sprintf(__('Step %d - Tiêu đề', 'ShopCar'), $i),
+            'section'  => 'shopcar_trade_in_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('trade_in_step' . $i . '_desc', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('trade_in_step' . $i . '_desc', [
+            'label'    => sprintf(__('Step %d - Mô tả', 'ShopCar'), $i),
+            'section'  => 'shopcar_trade_in_page_settings',
+            'type'     => 'text',
+        ]);
+    }
+
+    $wp_customize->add_setting('valuation_form_title', [
+        'default'           => 'Đăng ký định giá xe',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('valuation_form_title', [
+        'label'    => __('Tiêu đề Form', 'ShopCar'),
+        'section'  => 'shopcar_trade_in_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('trade_in_submit_button_text', [
+        'default'           => 'Gửi yêu cầu định giá',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('trade_in_submit_button_text', [
+        'label'    => __('Text nút Submit', 'ShopCar'),
+        'section'  => 'shopcar_trade_in_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('accepted_brands_title', [
+        'default'           => 'Chúng tôi thu mua tất cả các hãng xe',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('accepted_brands_title', [
+        'label'    => __('Tiêu đề Accepted Brands', 'ShopCar'),
+        'section'  => 'shopcar_trade_in_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('accepted_brands_description', [
+        'default'           => 'Toyota, Honda, Mazda, Ford, Hyundai, Kia, Mitsubishi, Nissan, Suzuki, VinFast và nhiều hãng khác.',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('accepted_brands_description', [
+        'label'    => __('Mô tả Accepted Brands', 'ShopCar'),
+        'section'  => 'shopcar_trade_in_page_settings',
+        'type'     => 'text',
+    ]);
+}
+
+// === TESTIMONIALS PAGE CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_testimonials_page_customizer_settings');
+function shopcar_testimonials_page_customizer_settings($wp_customize) {
+    
+    $wp_customize->add_section('shopcar_testimonials_page_settings', [
+        'title'    => __('Testimonials Page Settings', 'ShopCar'),
+        'priority' => 74,
+    ]);
+
+    $wp_customize->add_setting('testimonials_page_title', [
+        'default'           => 'Đánh giá khách hàng',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('testimonials_page_title', [
+        'label'    => __('Tiêu đề trang', 'ShopCar'),
+        'section'  => 'shopcar_testimonials_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('testimonials_page_description', [
+        'default'           => 'Những phản hồi chân thực từ khách hàng đã sử dụng dịch vụ của chúng tôi.',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('testimonials_page_description', [
+        'label'    => __('Mô tả', 'ShopCar'),
+        'section'  => 'shopcar_testimonials_page_settings',
+        'type'     => 'textarea',
+    ]);
+
+    // Testimonials (9 items)
+    for ($i = 1; $i <= 9; $i++) {
+        $wp_customize->add_setting('testimonial' . $i . '_name', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('testimonial' . $i . '_name', [
+            'label'    => sprintf(__('Testimonial %d - Tên khách hàng', 'ShopCar'), $i),
+            'section'  => 'shopcar_testimonials_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('testimonial' . $i . '_text', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_textarea_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('testimonial' . $i . '_text', [
+            'label'    => sprintf(__('Testimonial %d - Nội dung', 'ShopCar'), $i),
+            'section'  => 'shopcar_testimonials_page_settings',
+            'type'     => 'textarea',
+        ]);
+
+        $wp_customize->add_setting('testimonial' . $i . '_car', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('testimonial' . $i . '_car', [
+            'label'    => sprintf(__('Testimonial %d - Xe đã mua', 'ShopCar'), $i),
+            'section'  => 'shopcar_testimonials_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('testimonial' . $i . '_rating', [
+            'default'           => 5,
+            'sanitize_callback' => 'absint',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('testimonial' . $i . '_rating', [
+            'label'    => sprintf(__('Testimonial %d - Đánh giá (1-5)', 'ShopCar'), $i),
+            'section'  => 'shopcar_testimonials_page_settings',
+            'type'     => 'number',
+            'input_attrs' => [
+                'min'  => 1,
+                'max'  => 5,
+                'step' => 1,
+            ],
+        ]);
+    }
+
+    // Stats
+    $wp_customize->add_setting('testimonials_total', [
+        'default'           => '500+',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('testimonials_total', [
+        'label'    => __('Tổng số đánh giá', 'ShopCar'),
+        'section'  => 'shopcar_testimonials_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('testimonials_total_label', [
+        'default'           => 'Khách hàng đánh giá',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('testimonials_total_label', [
+        'label'    => __('Label tổng số', 'ShopCar'),
+        'section'  => 'shopcar_testimonials_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('testimonials_rating', [
+        'default'           => '4.8',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('testimonials_rating', [
+        'label'    => __('Điểm đánh giá trung bình', 'ShopCar'),
+        'section'  => 'shopcar_testimonials_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('testimonials_rating_label', [
+        'default'           => 'Điểm đánh giá trung bình',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('testimonials_rating_label', [
+        'label'    => __('Label điểm đánh giá', 'ShopCar'),
+        'section'  => 'shopcar_testimonials_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('testimonials_satisfaction', [
+        'default'           => '98%',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('testimonials_satisfaction', [
+        'label'    => __('Tỷ lệ hài lòng', 'ShopCar'),
+        'section'  => 'shopcar_testimonials_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('testimonials_satisfaction_label', [
+        'default'           => 'Khách hàng hài lòng',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('testimonials_satisfaction_label', [
+        'label'    => __('Label tỷ lệ hài lòng', 'ShopCar'),
+        'section'  => 'shopcar_testimonials_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('testimonials_cta_title', [
+        'default'           => 'Bạn cũng muốn chia sẻ trải nghiệm?',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('testimonials_cta_title', [
+        'label'    => __('Tiêu đề CTA', 'ShopCar'),
+        'section'  => 'shopcar_testimonials_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('testimonials_cta_description', [
+        'default'           => 'Hãy để lại đánh giá của bạn về dịch vụ của chúng tôi.',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('testimonials_cta_description', [
+        'label'    => __('Mô tả CTA', 'ShopCar'),
+        'section'  => 'shopcar_testimonials_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('testimonials_cta_button_text', [
+        'default'           => 'Gửi đánh giá',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('testimonials_cta_button_text', [
+        'label'    => __('Text nút CTA', 'ShopCar'),
+        'section'  => 'shopcar_testimonials_page_settings',
+        'type'     => 'text',
+    ]);
+}
+
+// === PARTNERSHIP PAGE CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_partnership_page_customizer_settings');
+function shopcar_partnership_page_customizer_settings($wp_customize) {
+    
+    $wp_customize->add_section('shopcar_partnership_page_settings', [
+        'title'    => __('Partnership Page Settings', 'ShopCar'),
+        'priority' => 75,
+    ]);
+
+    $wp_customize->add_setting('partnership_page_title', [
+        'default'           => 'Hợp tác kinh doanh',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('partnership_page_title', [
+        'label'    => __('Tiêu đề trang', 'ShopCar'),
+        'section'  => 'shopcar_partnership_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('partnership_page_description', [
+        'default'           => 'Cơ hội hợp tác kinh doanh với showroom xe hơi hàng đầu. Cùng nhau phát triển và thành công.',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('partnership_page_description', [
+        'label'    => __('Mô tả', 'ShopCar'),
+        'section'  => 'shopcar_partnership_page_settings',
+        'type'     => 'textarea',
+    ]);
+
+    $wp_customize->add_setting('partnership_types_title', [
+        'default'           => 'Các hình thức hợp tác',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('partnership_types_title', [
+        'label'    => __('Tiêu đề Types', 'ShopCar'),
+        'section'  => 'shopcar_partnership_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Partnership Types (3 items)
+    for ($i = 1; $i <= 3; $i++) {
+        $wp_customize->add_setting('partnership_type' . $i . '_title', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('partnership_type' . $i . '_title', [
+            'label'    => sprintf(__('Type %d - Tiêu đề', 'ShopCar'), $i),
+            'section'  => 'shopcar_partnership_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('partnership_type' . $i . '_desc', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_textarea_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('partnership_type' . $i . '_desc', [
+            'label'    => sprintf(__('Type %d - Mô tả', 'ShopCar'), $i),
+            'section'  => 'shopcar_partnership_page_settings',
+            'type'     => 'textarea',
+        ]);
+    }
+
+    $wp_customize->add_setting('partnership_benefits_title', [
+        'default'           => 'Lợi ích khi hợp tác',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('partnership_benefits_title', [
+        'label'    => __('Tiêu đề Benefits', 'ShopCar'),
+        'section'  => 'shopcar_partnership_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Benefits (4 items)
+    for ($i = 1; $i <= 4; $i++) {
+        $wp_customize->add_setting('partnership_benefit' . $i . '_title', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('partnership_benefit' . $i . '_title', [
+            'label'    => sprintf(__('Benefit %d - Tiêu đề', 'ShopCar'), $i),
+            'section'  => 'shopcar_partnership_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('partnership_benefit' . $i . '_desc', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_textarea_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('partnership_benefit' . $i . '_desc', [
+            'label'    => sprintf(__('Benefit %d - Mô tả', 'ShopCar'), $i),
+            'section'  => 'shopcar_partnership_page_settings',
+            'type'     => 'textarea',
+        ]);
+    }
+
+    $wp_customize->add_setting('partnership_form_title', [
+        'default'           => 'Đăng ký hợp tác',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('partnership_form_title', [
+        'label'    => __('Tiêu đề Form', 'ShopCar'),
+        'section'  => 'shopcar_partnership_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('partnership_submit_button_text', [
+        'default'           => 'Gửi yêu cầu hợp tác',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('partnership_submit_button_text', [
+        'label'    => __('Text nút Submit', 'ShopCar'),
+        'section'  => 'shopcar_partnership_page_settings',
+        'type'     => 'text',
+    ]);
+}
+
+// === RETURN POLICY PAGE CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_return_policy_page_customizer_settings');
+function shopcar_return_policy_page_customizer_settings($wp_customize) {
+    
+    $wp_customize->add_section('shopcar_return_policy_page_settings', [
+        'title'    => __('Return Policy Page Settings', 'ShopCar'),
+        'priority' => 76,
+    ]);
+
+    $wp_customize->add_setting('return_policy_page_title', [
+        'default'           => 'Chính sách đổi trả',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('return_policy_page_title', [
+        'label'    => __('Tiêu đề trang', 'ShopCar'),
+        'section'  => 'shopcar_return_policy_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('return_policy_description', [
+        'default'           => 'Chúng tôi cam kết đảm bảo quyền lợi của khách hàng với chính sách đổi trả minh bạch và công bằng.',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('return_policy_description', [
+        'label'    => __('Mô tả', 'ShopCar'),
+        'section'  => 'shopcar_return_policy_page_settings',
+        'type'     => 'textarea',
+    ]);
+
+    $wp_customize->add_setting('return_conditions_title', [
+        'default'           => 'Điều kiện đổi trả',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('return_conditions_title', [
+        'label'    => __('Tiêu đề Conditions', 'ShopCar'),
+        'section'  => 'shopcar_return_policy_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Conditions (4 items)
+    for ($i = 1; $i <= 4; $i++) {
+        $wp_customize->add_setting('return_condition' . $i . '_title', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('return_condition' . $i . '_title', [
+            'label'    => sprintf(__('Condition %d - Tiêu đề', 'ShopCar'), $i),
+            'section'  => 'shopcar_return_policy_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('return_condition' . $i . '_desc', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_textarea_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('return_condition' . $i . '_desc', [
+            'label'    => sprintf(__('Condition %d - Mô tả', 'ShopCar'), $i),
+            'section'  => 'shopcar_return_policy_page_settings',
+            'type'     => 'textarea',
+        ]);
+    }
+
+    $wp_customize->add_setting('return_process_title', [
+        'default'           => 'Quy trình đổi trả',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('return_process_title', [
+        'label'    => __('Tiêu đề Process', 'ShopCar'),
+        'section'  => 'shopcar_return_policy_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Process Steps (3 steps)
+    for ($i = 1; $i <= 3; $i++) {
+        $wp_customize->add_setting('return_process_step' . $i, [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('return_process_step' . $i, [
+            'label'    => sprintf(__('Step %d - Tiêu đề', 'ShopCar'), $i),
+            'section'  => 'shopcar_return_policy_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('return_process_step' . $i . '_desc', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_textarea_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('return_process_step' . $i . '_desc', [
+            'label'    => sprintf(__('Step %d - Mô tả', 'ShopCar'), $i),
+            'section'  => 'shopcar_return_policy_page_settings',
+            'type'     => 'textarea',
+        ]);
+    }
+
+    $wp_customize->add_setting('refund_policy_title', [
+        'default'           => 'Chính sách hoàn tiền',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('refund_policy_title', [
+        'label'    => __('Tiêu đề Refund Policy', 'ShopCar'),
+        'section'  => 'shopcar_return_policy_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('refund_policy_note', [
+        'default'           => 'Lưu ý:',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('refund_policy_note', [
+        'label'    => __('Note Refund Policy', 'ShopCar'),
+        'section'  => 'shopcar_return_policy_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('refund_policy_description', [
+        'default'           => 'Hoàn tiền sẽ được thực hiện qua tài khoản ngân hàng hoặc tiền mặt trong vòng 7-10 ngày làm việc. Phí vận chuyển (nếu có) sẽ không được hoàn lại.',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('refund_policy_description', [
+        'label'    => __('Mô tả Refund Policy', 'ShopCar'),
+        'section'  => 'shopcar_return_policy_page_settings',
+        'type'     => 'textarea',
+    ]);
+
+    $wp_customize->add_setting('return_policy_button_text', [
+        'default'           => 'Liên hệ hỗ trợ',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('return_policy_button_text', [
+        'label'    => __('Text nút', 'ShopCar'),
+        'section'  => 'shopcar_return_policy_page_settings',
+        'type'     => 'text',
+    ]);
+}
+
+// === CAREERS PAGE CUSTOMIZER SETTINGS ===
+add_action('customize_register', 'shopcar_careers_page_customizer_settings');
+function shopcar_careers_page_customizer_settings($wp_customize) {
+    
+    $wp_customize->add_section('shopcar_careers_page_settings', [
+        'title'    => __('Careers Page Settings', 'ShopCar'),
+        'priority' => 77,
+    ]);
+
+    $wp_customize->add_setting('careers_page_title', [
+        'default'           => 'Tuyển dụng',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('careers_page_title', [
+        'label'    => __('Tiêu đề trang', 'ShopCar'),
+        'section'  => 'shopcar_careers_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('careers_page_description', [
+        'default'           => 'Cơ hội nghề nghiệp tại showroom xe hơi hàng đầu. Chúng tôi đang tìm kiếm những tài năng để cùng phát triển.',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('careers_page_description', [
+        'label'    => __('Mô tả', 'ShopCar'),
+        'section'  => 'shopcar_careers_page_settings',
+        'type'     => 'textarea',
+    ]);
+
+    $wp_customize->add_setting('why_join_title', [
+        'default'           => 'Tại sao nên làm việc với chúng tôi?',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('why_join_title', [
+        'label'    => __('Tiêu đề Why Join', 'ShopCar'),
+        'section'  => 'shopcar_careers_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Career Benefits (3 items)
+    for ($i = 1; $i <= 3; $i++) {
+        $wp_customize->add_setting('career_benefit' . $i . '_title', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('career_benefit' . $i . '_title', [
+            'label'    => sprintf(__('Benefit %d - Tiêu đề', 'ShopCar'), $i),
+            'section'  => 'shopcar_careers_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('career_benefit' . $i . '_desc', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_textarea_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('career_benefit' . $i . '_desc', [
+            'label'    => sprintf(__('Benefit %d - Mô tả', 'ShopCar'), $i),
+            'section'  => 'shopcar_careers_page_settings',
+            'type'     => 'textarea',
+        ]);
+    }
+
+    $wp_customize->add_setting('job_openings_title', [
+        'default'           => 'Vị trí đang tuyển dụng',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('job_openings_title', [
+        'label'    => __('Tiêu đề Job Openings', 'ShopCar'),
+        'section'  => 'shopcar_careers_page_settings',
+        'type'     => 'text',
+    ]);
+
+    // Jobs (5 items)
+    for ($i = 1; $i <= 5; $i++) {
+        $wp_customize->add_setting('job' . $i . '_title', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('job' . $i . '_title', [
+            'label'    => sprintf(__('Job %d - Tiêu đề', 'ShopCar'), $i),
+            'section'  => 'shopcar_careers_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('job' . $i . '_location', [
+            'default'           => 'Hà Nội / TP.HCM',
+            'sanitize_callback' => 'sanitize_text_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('job' . $i . '_location', [
+            'label'    => sprintf(__('Job %d - Địa điểm', 'ShopCar'), $i),
+            'section'  => 'shopcar_careers_page_settings',
+            'type'     => 'text',
+        ]);
+
+        $wp_customize->add_setting('job' . $i . '_description', [
+            'default'           => '',
+            'sanitize_callback' => 'sanitize_textarea_field',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('job' . $i . '_description', [
+            'label'    => sprintf(__('Job %d - Mô tả', 'ShopCar'), $i),
+            'section'  => 'shopcar_careers_page_settings',
+            'type'     => 'textarea',
+        ]);
+
+        $wp_customize->add_setting('job' . $i . '_apply_url', [
+            'default'           => '',
+            'sanitize_callback' => 'esc_url_raw',
+            'transport'         => 'postMessage',
+        ]);
+        $wp_customize->add_control('job' . $i . '_apply_url', [
+            'label'    => sprintf(__('Job %d - URL ứng tuyển', 'ShopCar'), $i),
+            'section'  => 'shopcar_careers_page_settings',
+            'type'     => 'url',
+        ]);
+    }
+
+    $wp_customize->add_setting('careers_apply_button_text', [
+        'default'           => 'Ứng tuyển ngay',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('careers_apply_button_text', [
+        'label'    => __('Text nút Apply', 'ShopCar'),
+        'section'  => 'shopcar_careers_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('application_form_title', [
+        'default'           => 'Gửi CV ứng tuyển',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('application_form_title', [
+        'label'    => __('Tiêu đề Form', 'ShopCar'),
+        'section'  => 'shopcar_careers_page_settings',
+        'type'     => 'text',
+    ]);
+
+    $wp_customize->add_setting('careers_submit_button_text', [
+        'default'           => 'Gửi đơn ứng tuyển',
+        'sanitize_callback' => 'sanitize_text_field',
+        'transport'         => 'postMessage',
+    ]);
+    $wp_customize->add_control('careers_submit_button_text', [
+        'label'    => __('Text nút Submit', 'ShopCar'),
+        'section'  => 'shopcar_careers_page_settings',
+        'type'     => 'text',
+    ]);
+}
+
+// === CUSTOMIZER PREVIEW JS ===
+add_action('customize_preview_init', 'shopcar_header_customizer_preview_js');
+function shopcar_header_customizer_preview_js() {
+    wp_enqueue_script(
+        'shopcar-header-customizer-preview',
+        get_template_directory_uri() . '/assets/js/customizer-preview.js',
+        ['customize-preview'],
+        CAR_THEME_VERSION,
+        true
+    );
+}
+
+// === CUSTOMIZER PREVIEW CSS ===
+add_action('wp_head', 'shopcar_header_customizer_css');
+function shopcar_header_customizer_css() {
+    if (!is_customize_preview()) {
+        return;
+    }
+    ?>
+    <style id="shopcar-header-customizer-css">
+        .header-top-bar {
+            background-color: <?php echo esc_attr(get_theme_mod('header_top_bar_bg', '#1a1a1a')); ?> !important;
+            color: <?php echo esc_attr(get_theme_mod('header_top_bar_text_color', '#ffffff')); ?> !important;
+        }
+        .header-top-bar-left a,
+        .header-top-bar-right a {
+            color: <?php echo esc_attr(get_theme_mod('header_top_bar_text_color', '#ffffff')); ?> !important;
+        }
+        .header.axil-header {
+            background-color: <?php echo esc_attr(get_theme_mod('header_bg_color', '#ffffff')); ?> !important;
+            padding-top: <?php echo esc_attr(get_theme_mod('header_padding_top', '16')); ?>px !important;
+            padding-bottom: <?php echo esc_attr(get_theme_mod('header_padding_bottom', '16')); ?>px !important;
+        }
+        .header.axil-header.sticky {
+            background-color: <?php echo esc_attr(get_theme_mod('header_bg_color', '#ffffff')); ?> !important;
+        }
+        .header-logo img {
+            height: <?php echo esc_attr(get_theme_mod('header_logo_height', '48')); ?>px !important;
+        }
+        .header-nav .mainmenu li a {
+            color: <?php echo esc_attr(get_theme_mod('header_menu_text_color', '#222222')); ?> !important;
+            font-size: <?php echo esc_attr(get_theme_mod('header_menu_font_size', '15')); ?>px !important;
+        }
+        .header-nav .mainmenu li a:hover {
+            background: <?php echo esc_attr(get_theme_mod('header_menu_hover_bg', '#f5f5f5')); ?> !important;
+            color: <?php echo esc_attr(get_theme_mod('header_menu_hover_color', '#000000')); ?> !important;
+        }
+        .action-list li a {
+            color: <?php echo esc_attr(get_theme_mod('header_action_icons_color', '#222222')); ?> !important;
+        }
+        .header-search-box button {
+            background: <?php echo esc_attr(get_theme_mod('header_search_button_color', '#000000')); ?> !important;
+        }
+        .cart-count {
+            background: <?php echo esc_attr(get_theme_mod('header_cart_badge_color', '#ff497c')); ?> !important;
+        }
+    </style>
+    <?php
+}
+
+// === DYNAMIC CSS FOR CUSTOMIZER SETTINGS ===
+add_action('wp_head', 'shopcar_dynamic_customizer_css');
+function shopcar_dynamic_customizer_css() {
+    ?>
+    <style id="shopcar-dynamic-customizer-css">
+        /* Color Scheme */
+        :root {
+            --color-primary: <?php echo esc_attr(get_theme_mod('color_primary', '#007bff')); ?>;
+            --color-secondary: <?php echo esc_attr(get_theme_mod('color_secondary', '#6c757d')); ?>;
+            --color-accent: <?php echo esc_attr(get_theme_mod('color_accent', '#ff497c')); ?>;
+        }
+        
+        body {
+            color: <?php echo esc_attr(get_theme_mod('color_text', '#222222')); ?>;
+            background-color: <?php echo esc_attr(get_theme_mod('color_background', '#ffffff')); ?>;
+            font-size: <?php echo esc_attr(get_theme_mod('typography_body_size', '16')); ?>px;
+            font-family: <?php echo esc_attr(get_theme_mod('typography_font_family', 'Arial, sans-serif')); ?>;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-size: <?php echo esc_attr(get_theme_mod('typography_heading_size', '32')); ?>px;
+        }
+        
+        .axil-btn.btn-primary {
+            background-color: <?php echo esc_attr(get_theme_mod('color_primary', '#007bff')); ?>;
+        }
+        
+        .axil-btn.btn-primary:hover {
+            background-color: <?php echo esc_attr(get_theme_mod('color_primary', '#007bff')); ?>;
+            opacity: 0.9;
+        }
+        
+        /* Footer Styles */
+        .axil-footer-area {
+            background-color: <?php echo esc_attr(get_theme_mod('footer_bg_color', '#1a1a1a')); ?> !important;
+            color: <?php echo esc_attr(get_theme_mod('footer_text_color', '#ffffff')); ?> !important;
+        }
+        
+        .axil-footer-area a {
+            color: <?php echo esc_attr(get_theme_mod('footer_text_color', '#ffffff')); ?> !important;
+        }
+        
+        .axil-footer-area a:hover {
+            opacity: 0.8;
+        }
+    </style>
+    <?php
+}
 
 
 // === Enqueue Scripts & Styles (GỘP LẠI 1 HÀM) ===
@@ -795,7 +3675,7 @@ function shopcar_send_chat_message()
         'sender' => 'user',
         'sender_name' => wp_get_current_user()->display_name,
         'message' => $message,
-        'timestamp' => current_time('mysql')
+        'timestamp' => current_time('mysql', true)
     );
 
     update_post_meta($chat_id, '_messages', $messages);

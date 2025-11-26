@@ -10,18 +10,23 @@ get_header();
             <div class="row align-items-center">
                 <div class="col-lg-6 col-md-7 col-sm-12">
                     <div class="main-slider-content">
-                        <h1 class="title">Discover Premium Cars</h1>
-                        <p class="subtitle">Luxury • Performance • Quality</p>
+                        <h1 class="title"><?php echo esc_html(get_theme_mod('homepage_slider_title', 'Discover Premium Cars')); ?></h1>
+                        <p class="subtitle"><?php echo esc_html(get_theme_mod('homepage_slider_subtitle', 'Luxury • Performance • Quality')); ?></p>
                         <a href="<?php echo wc_get_page_permalink('shop'); ?>" class="axil-btn btn-primary mt--20">
-                            Shop Now
+                            <?php echo esc_html(get_theme_mod('homepage_slider_button_text', 'Shop Now')); ?>
                         </a>
                     </div>
                 </div>
 
                 <div class="col-lg-6 col-md-5 col-sm-12 text-center">
-                    <img class="img-fluid" 
-                         src="<?php echo get_template_directory_uri(); ?>/assets/images/product/product-45.png"
-                         alt="Car Showcase">
+                    <?php 
+                    $slider_image = get_theme_mod('homepage_slider_image');
+                    if ($slider_image) {
+                        echo '<img class="img-fluid" src="' . esc_url($slider_image) . '" alt="Car Showcase">';
+                    } else {
+                        echo '<img class="img-fluid" src="' . get_template_directory_uri() . '/assets/images/product/product-45.png" alt="Car Showcase">';
+                    }
+                    ?>
                 </div>
             </div>
         </div>
@@ -35,7 +40,7 @@ get_header();
                 <span class="title-highlighter highlighter-secondary">
                     <i class="far fa-tags"></i> Categories
                 </span>
-                <h2 class="title">Browse by Category</h2>
+                <h2 class="title"><?php echo esc_html(get_theme_mod('homepage_categories_title', 'Browse by Category')); ?></h2>
             </div>
 
             <div class="row justify-content-center">
@@ -76,13 +81,13 @@ get_header();
                 <span class="title-highlighter highlighter-primary">
                     <i class="far fa-shopping-basket"></i> Our Products
                 </span>
-                <h2 class="title">Explore Our Products</h2>
+                <h2 class="title"><?php echo esc_html(get_theme_mod('homepage_products_title', 'Explore Our Products')); ?></h2>
             </div>
 
             <div class="axil-product-list d-flex flex justify-content-center gap-4">
                 <?php
                 $products = wc_get_products([
-                    'limit'   => 6,
+                    'limit'   => absint(get_theme_mod('homepage_products_count', 6)),
                     'orderby' => 'date',
                     'order'   => 'DESC'
                 ]);
@@ -144,10 +149,10 @@ get_header();
                         <i class="fas fa-envelope-open"></i>Newsletter
                     </span>
 
-                    <h2 class="title mb--40">Get Weekly Updates</h2>
+                    <h2 class="title mb--40"><?php echo esc_html(get_theme_mod('homepage_newsletter_title', 'Get Weekly Updates')); ?></h2>
 
                     <div class="newsletter-form d-flex justify-content-center">
-                        <input type="email" placeholder="example@gmail.com" class="newsletter-input">
+                        <input type="email" placeholder="<?php echo esc_attr(get_theme_mod('homepage_newsletter_placeholder', 'example@gmail.com')); ?>" class="newsletter-input">
                         <button type="submit" class="axil-btn">Subscribe</button>
                     </div>
 

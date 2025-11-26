@@ -19,7 +19,7 @@ get_header();
                             <li class="separator"></li>
                             <li class="axil-breadcrumb-item active">Service</li>
                         </ul>
-                        <h1 class="title">Professional Car Services</h1>
+                        <h1 class="title"><?php echo esc_html(get_theme_mod('service_page_title', 'Professional Car Services')); ?></h1>
                     </div>
                 </div>
 
@@ -55,12 +55,10 @@ get_header();
                         <span class="title-highlighter highlighter-primary2">
                             <i class="fas fa-tools"></i> Our Services
                         </span>
-                        <h3 class="title">Chăm sóc & bảo dưỡng xe toàn diện</h3>
+                        <h3 class="title"><?php echo esc_html(get_theme_mod('service_page_title', 'Chăm sóc & bảo dưỡng xe toàn diện')); ?></h3>
 
                         <p>
-                            Showroom của chúng tôi cung cấp đầy đủ dịch vụ từ bảo dưỡng định kỳ,
-                            sửa chữa kỹ thuật, thay thế phụ tùng chính hãng cho đến chăm sóc ngoại thất – nội thất.
-                            Đội ngũ kỹ thuật viên chuyên nghiệp cam kết mang lại chất lượng cao nhất cho chiếc xe của bạn.
+                            <?php echo esc_html(get_theme_mod('service_page_description', 'Showroom của chúng tôi cung cấp đầy đủ dịch vụ từ bảo dưỡng định kỳ, sửa chữa kỹ thuật, thay thế phụ tùng chính hãng cho đến chăm sóc ngoại thất – nội thất. Đội ngũ kỹ thuật viên chuyên nghiệp cam kết mang lại chất lượng cao nhất cho chiếc xe của bạn.')); ?>
                         </p>
                     </div>
                 </div>
@@ -160,8 +158,8 @@ get_header();
                         <i class="fas fa-calendar-check"></i> Booking
                     </span>
 
-                    <h2 class="title mb--20">Đặt lịch bảo dưỡng / kiểm tra xe</h2>
-                    <p class="mb--30">Chúng tôi sẽ liên hệ xác nhận trong vòng 15 phút.</p>
+                    <h2 class="title mb--20"><?php echo esc_html(get_theme_mod('service_booking_title', 'Đặt lịch bảo dưỡng / kiểm tra xe')); ?></h2>
+                    <p class="mb--30"><?php echo esc_html(get_theme_mod('service_booking_description', 'Chúng tôi sẽ liên hệ xác nhận trong vòng 15 phút.')); ?></p>
 
                     <a href="<?php echo site_url('/contact'); ?>" class="axil-btn btn-primary">
                         Đặt lịch ngay

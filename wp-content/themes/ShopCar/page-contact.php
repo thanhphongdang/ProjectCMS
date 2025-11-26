@@ -67,22 +67,26 @@ get_header();
 
                             <span class="address mb--10">
                                 <strong>Địa chỉ:</strong><br>
-                                685 Market Street, Las Vegas, LA 95820, USA
+                                <?php echo esc_html(get_theme_mod('contact_page_address', '685 Market Street, Las Vegas, LA 95820, USA')); ?>
                             </span>
 
                             <span class="phone mb--10">
                                 <strong>Hotline:</strong><br>
-                                <a href="tel:+018503155862">(+01) 850-315-5862</a>
+                                <a href="tel:<?php echo esc_attr(preg_replace('/[^0-9+]/', '', get_theme_mod('contact_page_phone', '(+01) 850-315-5862'))); ?>">
+                                    <?php echo esc_html(get_theme_mod('contact_page_phone', '(+01) 850-315-5862')); ?>
+                                </a>
                             </span>
 
                             <span class="email mb--10">
                                 <strong>Email:</strong><br>
-                                <a href="mailto:hello@cardealer.com">hello@cardealer.com</a>
+                                <a href="mailto:<?php echo esc_attr(get_theme_mod('contact_page_email', 'hello@cardealer.com')); ?>">
+                                    <?php echo esc_html(get_theme_mod('contact_page_email', 'hello@cardealer.com')); ?>
+                                </a>
                             </span>
 
                             <span class="zalo mb--10">
                                 <strong>Zalo tư vấn:</strong><br>
-                                <a href="#">Zalo Chat</a>
+                                <a href="<?php echo esc_url(get_theme_mod('contact_page_zalo', '#')); ?>">Zalo Chat</a>
                             </span>
 
                         </div>
@@ -90,8 +94,7 @@ get_header();
                         <div class="opening-hour">
                             <h4 class="title mb--20">Giờ làm việc</h4>
                             <p>
-                                Thứ 2 – Thứ 7: 8:00 - 20:00<br/>
-                                Chủ nhật: 9:00 - 17:00
+                                <?php echo nl2br(esc_html(get_theme_mod('contact_page_working_hours', 'Thứ 2 – Thứ 7: 8:00 - 20:00\nChủ nhật: 9:00 - 17:00'))); ?>
                             </p>
                         </div>
 
@@ -108,7 +111,7 @@ get_header();
                     style="border:0; border-radius:10px;"
                     loading="lazy"
                     allowfullscreen
-                    src="https://www.google.com/maps?q=toyota%20showroom&t=&z=12&ie=UTF8&iwloc=&output=embed">
+                    src="<?php echo esc_url(get_theme_mod('contact_page_map_url', 'https://www.google.com/maps?q=toyota%20showroom&t=&z=12&ie=UTF8&iwloc=&output=embed')); ?>">
                 </iframe>
             </div>
 

@@ -74,10 +74,10 @@ get_header();
 
 <div class="shopee-voucher-box">
 
-    <div class="shopee-voucher-title">🎁 Mã giảm giá</div>
+    <div class="shopee-voucher-title">🎁 <?php echo esc_html(get_theme_mod('voucher_page_title', 'Mã giảm giá')); ?></div>
 
     <form method="post">
-        <input class="shopee-input-voucher" type="text" name="voucher" placeholder="Nhập mã giảm giá...">
+        <input class="shopee-input-voucher" type="text" name="voucher" placeholder="<?php echo esc_attr(get_theme_mod('voucher_placeholder', 'Nhập mã giảm giá...')); ?>">
         <button class="shopee-btn">Áp dụng</button>
     </form>
 
@@ -105,17 +105,22 @@ get_header();
     }
     ?>
 
-    <h3 style="margin-top:20px; font-size:18px;">Gợi ý voucher</h3>
+    <h3 style="margin-top:20px; font-size:18px;"><?php echo esc_html(get_theme_mod('voucher_suggestions_title', 'Gợi ý voucher')); ?></h3>
 
+    <?php
+    for ($i = 1; $i <= 3; $i++) {
+        $code = get_theme_mod('voucher_suggestion_' . $i . '_code', '');
+        $desc = get_theme_mod('voucher_suggestion_' . $i . '_desc', '');
+        if ($code) {
+    ?>
     <div class="voucher-item">
-        <div><strong>GIAM10K</strong> – giảm 10.000đ</div>
-        <button onclick="copyVoucher('GIAM10K')">Copy</button>
+        <div><strong><?php echo esc_html($code); ?></strong><?php echo $desc ? ' – ' . esc_html($desc) : ''; ?></div>
+        <button onclick="copyVoucher('<?php echo esc_js($code); ?>')">Copy</button>
     </div>
-
-    <div class="voucher-item">
-        <div><strong>SALE20</strong> – giảm 20%</div>
-        <button onclick="copyVoucher('SALE20')">Copy</button>
-    </div>
+    <?php
+        }
+    }
+    ?>
 
 </div>
 

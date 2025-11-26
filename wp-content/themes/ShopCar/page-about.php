@@ -61,13 +61,11 @@ get_header();
                         </span>
 
                         <h3 class="title">
-                            Chúng tôi là đại lý ô tô uy tín – nơi bạn tìm được chiếc xe phù hợp nhất.
+                            <?php echo esc_html(get_theme_mod('about_page_title', 'Chúng tôi là đại lý ô tô uy tín – nơi bạn tìm được chiếc xe phù hợp nhất.')); ?>
                         </h3>
 
                         <p class="text-heading">
-                            Với nhiều năm kinh nghiệm trong lĩnh vực mua bán xe hơi,
-                            chúng tôi cam kết mang đến cho khách hàng những mẫu xe chất lượng,
-                            giá tốt, kèm theo chính sách bảo hành – bảo dưỡng tối ưu.
+                            <?php echo esc_html(get_theme_mod('about_page_description', 'Với nhiều năm kinh nghiệm trong lĩnh vực mua bán xe hơi, chúng tôi cam kết mang đến cho khách hàng những mẫu xe chất lượng, giá tốt, kèm theo chính sách bảo hành – bảo dưỡng tối ưu.')); ?>
                         </p>
 
                         <div class="row mt--20">
@@ -101,8 +99,8 @@ get_header();
                             <img src="<?php echo get_template_directory_uri(); ?>/assets/images/about/shape-01.png">
                         </div>
                         <div class="content">
-                            <h6 class="title">5,000+ Xe đã bán</h6>
-                            <p>Hơn 5,000 khách hàng tin tưởng và lựa chọn.</p>
+                            <h6 class="title"><?php echo esc_html(get_theme_mod('about_page_stats_cars', '5,000+')); ?> Xe đã bán</h6>
+                            <p>Hơn <?php echo esc_html(get_theme_mod('about_page_stats_cars', '5,000+')); ?> khách hàng tin tưởng và lựa chọn.</p>
                         </div>
                     </div>
                 </div>
@@ -113,7 +111,7 @@ get_header();
                             <img src="<?php echo get_template_directory_uri(); ?>/assets/images/about/shape-02.png">
                         </div>
                         <div class="content">
-                            <h6 class="title">10+ Năm kinh nghiệm</h6>
+                            <h6 class="title"><?php echo esc_html(get_theme_mod('about_page_stats_years', '10+')); ?> Năm kinh nghiệm</h6>
                             <p>Đội ngũ chuyên gia tư vấn xe chuyên nghiệp.</p>
                         </div>
                     </div>
@@ -125,7 +123,7 @@ get_header();
                             <img src="<?php echo get_template_directory_uri(); ?>/assets/images/about/shape-03.png">
                         </div>
                         <div class="content">
-                            <h6 class="title">98% Khách hàng hài lòng</h6>
+                            <h6 class="title"><?php echo esc_html(get_theme_mod('about_page_stats_satisfaction', '98%')); ?> Khách hàng hài lòng</h6>
                             <p>Uy tín tạo nên thương hiệu.</p>
                         </div>
                     </div>

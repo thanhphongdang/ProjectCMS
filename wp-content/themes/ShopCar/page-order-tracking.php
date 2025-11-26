@@ -81,13 +81,13 @@ get_header();
 
 <div class="container" style="max-width:700px; margin: 40px auto;">
     <div class="shopee-box">
-        <h3 class="shopee-title">Tra cứu đơn hàng</h3>
+        <h3 class="shopee-title"><?php echo esc_html(get_theme_mod('order_tracking_page_title', 'Tra cứu đơn hàng')); ?></h3>
 
         <form method="post">
-            <input type="text" name="order_id" class="shopee-input" placeholder="Nhập mã đơn hàng (VD: 2536)" required>
-            <input type="text" name="order_email" class="shopee-input" placeholder="Email hoặc số điện thoại" required>
+            <input type="text" name="order_id" class="shopee-input" placeholder="<?php echo esc_attr(get_theme_mod('order_tracking_order_id_placeholder', 'Nhập mã đơn hàng (VD: 2536)')); ?>" required>
+            <input type="text" name="order_email" class="shopee-input" placeholder="<?php echo esc_attr(get_theme_mod('order_tracking_email_placeholder', 'Email hoặc số điện thoại')); ?>" required>
 
-            <button class="shopee-btn">Tra cứu</button>
+            <button class="shopee-btn"><?php echo esc_html(get_theme_mod('order_tracking_button_text', 'Tra cứu')); ?></button>
         </form>
 
         <?php

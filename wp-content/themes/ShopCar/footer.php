@@ -2,7 +2,7 @@
 
 </main>
 
-<footer class="axil-footer-area footer-style-2">
+<footer class="axil-footer-area footer-style-2" style="background-color: <?php echo esc_attr(get_theme_mod('footer_bg_color', '#1a1a1a')); ?>; color: <?php echo esc_attr(get_theme_mod('footer_text_color', '#ffffff')); ?>;">
 
     <!-- Start Footer Top Area -->
     <div class="footer-top separator-top">
@@ -22,16 +22,21 @@
 
                             <ul class="support-list-item">
                                 <li>
-                                    <a href="mailto:example@domain.com">
-                                        <i class="fal fa-envelope-open"></i> example@domain.com
+                                    <a href="mailto:<?php echo esc_attr(get_theme_mod('footer_email', 'example@domain.com')); ?>" class="footer-email">
+                                        <i class="fal fa-envelope-open"></i> <?php echo esc_html(get_theme_mod('footer_email', 'example@domain.com')); ?>
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="tel:(+01)850-315-5862">
-                                        <i class="fal fa-phone-alt"></i> (+01) 850-315-5862
+                                    <a href="tel:<?php echo esc_attr(preg_replace('/[^0-9+]/', '', get_theme_mod('footer_phone', '(+01) 850-315-5862'))); ?>" class="footer-phone">
+                                        <i class="fal fa-phone-alt"></i> <?php echo esc_html(get_theme_mod('footer_phone', '(+01) 850-315-5862')); ?>
                                     </a>
                                 </li>
                             </ul>
+                            <?php if (get_theme_mod('footer_address')): ?>
+                            <p class="footer-address" style="margin-top: 10px;">
+                                <?php echo esc_html(get_theme_mod('footer_address', '685 Market Street, Las Vegas, LA 95820, United States.')); ?>
+                            </p>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -104,11 +109,11 @@
                 <!-- Social -->
                 <div class="col-xl-4">
                     <div class="social-share">
-                        <a href="#"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fa-brands fa-x-twitter"></i></a>
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#"><i class="fab fa-discord"></i></a>
+                        <a href="<?php echo esc_url(get_theme_mod('footer_social_facebook', '#')); ?>" target="_blank" rel="noopener"><i class="fab fa-facebook-f"></i></a>
+                        <a href="<?php echo esc_url(get_theme_mod('footer_social_instagram', '#')); ?>" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
+                        <a href="<?php echo esc_url(get_theme_mod('footer_social_twitter', '#')); ?>" target="_blank" rel="noopener"><i class="fa-brands fa-x-twitter"></i></a>
+                        <a href="<?php echo esc_url(get_theme_mod('footer_social_linkedin', '#')); ?>" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="<?php echo esc_url(get_theme_mod('footer_social_discord', '#')); ?>" target="_blank" rel="noopener"><i class="fab fa-discord"></i></a>
                     </div>
                 </div>
 
@@ -116,9 +121,8 @@
                 <div class="col-xl-4 col-lg-12">
                     <div class="copyright-left d-flex flex-wrap justify-content-center">
                         <ul class="quick-link">
-                            <li>
-                                © <?php echo date("Y"); ?>. All rights reserved by
-                                <a href="https://axilthemes.com/" target="_blank">Axilthemes</a>.
+                            <li class="footer-copyright">
+                                <?php echo esc_html(get_theme_mod('footer_copyright', '© ' . date("Y") . '. All rights reserved by Axilthemes.')); ?>
                             </li>
                         </ul>
                     </div>
